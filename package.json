@@ -4,24 +4,37 @@
   "description": "Sistema de microsserviços para transações financeiras",
   "main": "index.js",
   "scripts": {
-    "dev:customers": "cd customers-service && npm run dev",
-    "dev:transactions": "cd transactions-service && npm run dev",
-    "dev": "concurrently \"npm run dev:customers\" \"npm run dev:transactions\"",
+    "test": "npm run test:integration",
+    "test:performance": "artillery run tests/performance/load-test.yml",
+    "test:stress": "artillery run tests/performance/stress-test.yml",
+    "test:performance:report": "artillery run tests/performance/load-test.yml --output performance-report.json && artillery report performance-report.json",
+    "setup": "npm run setup:customers && npm run setup:transactions",
+    "setup:customers": "cd customers-service && npm install && npm run db:generate",
+    "setup:transactions": "cd transactions-service && npm install && npm run db:generate",
+    "dev": "docker-compose up --build",
+    "dev:detached": "docker-compose up --build -d",
+    "stop": "docker-compose down",
+    "clean": "docker-compose down -v && docker system prune -f",
+    "build": "npm run build:customers && npm run build:transactions",
     "build:customers": "cd customers-service && npm run build",
     "build:transactions": "cd transactions-service && npm run build",
-    "build": "npm run build:customers && npm run build:transactions",
-    "start:customers": "cd customers-service && npm start",
-    "start:transactions": "cd transactions-service && npm start",
-    "start": "concurrently \"npm run start:customers\" \"npm run start:transactions\"",
-    "test:integration": "jest tests/integration --testTimeout=30000",
-    "test": "npm run test:integration",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "setup": "npm install && cd customers-service && npm install && cd ../transactions-service && npm install",
-    "prisma:generate": "cd customers-service && npx prisma generate && cd ../transactions-service && npx prisma generate",
-    "prisma:migrate": "cd customers-service && npx prisma migrate dev && cd ../transactions-service && npx prisma migrate dev"
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "npm run test:unit:customers && npm run test:unit:transactions",
+    "test:unit:customers": "cd customers-service && npm test",
+    "test:unit:transactions": "cd transactions-service && npm test",
+    "test:integration": "npm run test:integration:customers && npm run test:integration:transactions",
+    "test:integration:customers": "cd customers-service && npm run test:integration",
+    "test:integration:transactions": "cd transactions-service && npm run test:integration",
+    "test:e2e": "cd tests && npm run test:e2e",
+    "test:coverage": "npm run test:coverage:customers && npm run test:coverage:transactions",
+    "test:coverage:customers": "cd customers-service && npm run test:coverage",
+    "test:coverage:transactions": "cd transactions-service && npm run test:coverage",
+    "lint": "npm run lint:customers && npm run lint:transactions",
+    "lint:customers": "cd customers-service && npm run lint",
+    "lint:transactions": "cd transactions-service && npm run lint",
+    "format": "npm run format:customers && npm run format:transactions",
+    "format:customers": "cd customers-service && npm run format",
+    "format:transactions": "cd transactions-service && npm run format"
   },
   "keywords": [
     "microservices",
@@ -38,20 +51,27 @@
     "@types/jest": "^29.5.5",
     "@types/node": "^20.6.3",
     "@types/uuid": "^9.0.4",
+    "artillery": "^2.0.21",
     "concurrently": "^8.2.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "axios": "^1.5.0",
     "uuid": "^9.0.0"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "roots": ["<rootDir>/tests"],
-    "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
     "collectCoverageFrom": [
       "tests/**/*.ts",
       "!tests/**/*.d.ts"

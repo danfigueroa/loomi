@@ -1,0 +1,50 @@
+config:
+  target: 'http://localhost:8080'
+  phases:
+    - duration: 30
+      arrivalRate: 200
+      name: "High load burst"
+    - duration: 60
+      arrivalRate: 500
+      name: "Extreme stress"
+    - duration: 30
+      arrivalRate: 1000
+      name: "Breaking point"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  processor: "./helpers.js"
+
+scenarios:
+  - name: "Concurrent User Registration"
+    weight: 50
+    flow:
+      - post:
+          url: "/api/customers/register"
+          json:
+            name: "{{ $randomString() }}"
+            email: "{{ $randomEmail() }}"
+            password: "password123"
+
+  - name: "Concurrent Transaction Creation"
+    weight: 50
+    flow:
+      - post:
+          url: "/api/customers/register"
+          json:
+            name: "{{ $randomString() }}"
+            email: "{{ $randomEmail() }}"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - loop:
+          - post:
+              url: "/api/transactions"
+              headers:
+                Authorization: "Bearer {{ authToken }}"
+              json:
+                amount: "{{ $randomInt(1, 100) }}"
+                description: "Stress test transaction"
+                type: "credit"
+        count: 5

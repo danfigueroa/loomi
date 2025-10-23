@@ -18,7 +18,11 @@ O sistema é composto por dois microsserviços principais:
 - **Redis** para cache e sessões
 - **Docker** + **Docker Compose** para containerização
 - **Nginx** como proxy reverso e load balancer
-- **Jest** para testes de integração
+- **Jest** para testes unitários e de integração
+- **Artillery** para testes de performance
+- **Swagger/OpenAPI** para documentação de APIs
+- **NYC/Istanbul** para cobertura de testes
+- **GitHub Actions** para CI/CD
 
 ## 🚀 Funcionalidades Implementadas
 
@@ -46,6 +50,44 @@ O sistema é composto por dois microsserviços principais:
 - Nginx como proxy reverso
 - Variáveis de ambiente organizadas
 
+### Etapa 5: Testes e Documentação
+
+✅ **Documentação de APIs**
+- Swagger UI integrado em ambos os serviços (`/api-docs`)
+- Documentação OpenAPI 3.0 completa
+- Schemas detalhados para todas as entidades
+- Exemplos de request/response
+- Documentação de autenticação JWT
+
+✅ **Cobertura de Testes**
+- NYC/Istanbul configurado com quality gates (80%)
+- Relatórios de cobertura em HTML e LCOV
+- Testes unitários para controllers, services e repositories
+- Testes de integração para fluxos completos
+- Testes E2E com Docker Compose
+
+✅ **CI/CD Pipeline**
+- GitHub Actions workflow completo
+- Execução de testes unitários, integração e E2E
+- Verificação de cobertura de testes
+- Análise de segurança com npm audit
+- Build e validação de código
+- Quality gates para garantir qualidade
+
+✅ **Testes de Performance**
+- Artillery configurado para load testing
+- Cenários de teste realistas (registro, transações, consultas)
+- Testes de stress com diferentes cargas
+- Métricas de performance documentadas
+- Benchmarks e troubleshooting guide
+
+✅ **Automação e Scripts**
+- Scripts npm para todas as operações
+- Setup automático de ambiente
+- Scripts de build, test e deploy
+- Comandos de limpeza e reset
+- Documentação completa de comandos
+
 ## 🛠️ Configuração e Execução
 
 ### Pré-requisitos
@@ -55,65 +97,94 @@ O sistema é composto por dois microsserviços principais:
 - PostgreSQL (ou usar via Docker)
 - Redis (ou usar via Docker)
 
-### Instalação
+### Instalação Rápida
 
-1. Clone o repositório e instale as dependências:
 ```bash
+# Setup completo do ambiente
 npm run setup
 ```
 
-2. Configure as variáveis de ambiente:
+### Configuração Manual
+
+1. **Instalar dependências de cada serviço:**
+```bash
+npm run setup:customers
+npm run setup:transactions
+```
+
+2. **Configurar variáveis de ambiente:**
 ```bash
 cp .env.example .env
 # Edite o arquivo .env com suas configurações
 ```
 
-3. Execute as migrações do banco de dados:
-```bash
-npm run prisma:generate
-npm run prisma:migrate
-```
+### Execução
 
-### Execução em Desenvolvimento
-
+#### Desenvolvimento (Docker Compose)
 ```bash
-# Executar ambos os serviços
+# Executar todos os serviços com Docker
 npm run dev
 
-# Ou executar individualmente
-npm run dev:customers
-npm run dev:transactions
+# Executar em background
+npm run dev:detached
+
+# Parar todos os serviços
+npm run stop
+
+# Limpeza completa (containers, volumes, imagens)
+npm run clean
 ```
 
-### Execução com Docker
-
+#### Desenvolvimento Local (sem Docker)
 ```bash
-# Build e execução completa
-npm run docker:build
-npm run docker:up
-
-# Visualizar logs
-npm run docker:logs
-
-# Parar os serviços
-npm run docker:down
+# Em terminais separados
+cd customers-service && npm run dev
+cd transactions-service && npm run dev
 ```
 
 ## 🧪 Testes
 
-### Testes de Integração
+### Execução de Testes
 
 ```bash
-# Executar testes de integração entre serviços
+# Executar todos os tipos de teste
+npm run test:all
+
+# Testes unitários
+npm run test:unit
+
+# Testes de integração
 npm run test:integration
+
+# Testes End-to-End
+npm run test:e2e
+
+# Cobertura de testes
+npm run test:coverage
 ```
 
+### Testes de Performance
+
+```bash
+# Teste de carga básico
+npm run test:performance
+
+# Teste de stress
+npm run test:stress
+
+# Teste com relatório detalhado
+npm run test:performance:report
+```
+
+### Cobertura de Testes
+
 Os testes cobrem:
-- Health checks de ambos os serviços
-- Comunicação entre microsserviços
-- Validação de usuários via customers-service
-- Propagação de correlation IDs
-- Comportamento do circuit breaker
+- **Unitários**: Controllers, services, repositories, middlewares
+- **Integração**: Fluxos completos, comunicação entre serviços
+- **E2E**: Cenários de usuário completos com Docker
+- **Performance**: Load testing e stress testing
+
+**Quality Gates**: Cobertura mínima de 80% (linhas, branches, functions, statements)
 
 ## 📡 Endpoints
 
@@ -133,11 +204,17 @@ Os testes cobrem:
 - `GET /api/transactions/:id` - Buscar transação por ID
 - `GET /api/transactions/user/:userId` - Buscar transações do usuário
 
-### Nginx Proxy (Porta 80)
+### Nginx Proxy (Porta 8080)
 
 - `GET /health` - Health check do proxy
 - `/api/customers/*` - Proxy para customers-service
 - `/api/transactions/*` - Proxy para transactions-service
+
+### Documentação das APIs
+
+- **Customers Service**: `http://localhost:3001/api-docs`
+- **Transactions Service**: `http://localhost:3002/api-docs`
+- **Via Nginx**: `http://localhost:8080/api/customers/api-docs` e `http://localhost:8080/api/transactions/api-docs`
 
 ## 🔧 Configurações Avançadas
 
@@ -198,6 +275,70 @@ Logs em formato JSON com informações contextuais:
 - Rate limiting configurado
 - CORS habilitado
 - Helmet para headers de segurança
+
+## 📚 Documentação Adicional
+
+- **[Arquitetura do Sistema](./ARCHITECTURE.md)** - Documentação detalhada da arquitetura
+- **[Guia de Performance](./PERFORMANCE.md)** - Testes de performance e benchmarks
+- **[Troubleshooting](./TROUBLESHOOTING.md)** - Guia de resolução de problemas
+- **[Planejamento](./PLANEJAMENTO.md)** - Roadmap e etapas do projeto
+
+## 🤝 Contribuição
+
+### Scripts de Desenvolvimento
+
+```bash
+# Linting e formatação
+npm run lint
+npm run format
+
+# Build dos serviços
+npm run build
+
+# Limpeza completa
+npm run clean
+```
+
+### Quality Gates
+
+- Cobertura de testes: mínimo 80%
+- Linting: zero erros
+- Testes: todos devem passar
+- Build: deve ser bem-sucedido
+
+## 📈 CI/CD
+
+O projeto inclui pipeline completo no GitHub Actions:
+
+- ✅ Testes unitários e de integração
+- ✅ Verificação de cobertura de testes
+- ✅ Análise de segurança
+- ✅ Build e validação
+- ✅ Testes E2E com Docker
+- ✅ Quality gates
+
+## 🚀 Deploy
+
+### Produção
+
+```bash
+# Build para produção
+npm run build
+
+# Deploy com Docker
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Monitoramento
+
+- Health checks em `/health`
+- Métricas de performance
+- Logs estruturados
+- Correlation IDs para tracing
+
+---
+
+**Desenvolvido com ❤️ seguindo Clean Architecture e melhores práticas de microsserviços.**
 - Validação de entrada com Joi
 - Sanitização de dados
 

@@ -1,0 +1,73 @@
+config:
+  target: 'http://localhost:8080'
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 50
+      name: "Load test"
+    - duration: 60
+      arrivalRate: 100
+      name: "Stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  processor: "./helpers.js"
+
+scenarios:
+  - name: "Health Check Flow"
+    weight: 20
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+  - name: "Customer Service Flow"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/customers/register"
+          json:
+            name: "{{ $randomString() }}"
+            email: "{{ $randomString() }}@test.com"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - get:
+          url: "/api/customers/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Transaction Service Flow"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/customers/register"
+          json:
+            name: "{{ $randomString() }}"
+            email: "{{ $randomString() }}@test.com"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - post:
+          url: "/api/transactions"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            amount: "{{ $randomInt(10, 1000) }}"
+            description: "Performance test transaction"
+            type: "credit"
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/api/transactions"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200

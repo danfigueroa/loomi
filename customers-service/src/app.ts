@@ -2,12 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { logger } from '@/config/logger';
 import { errorHandler } from '@/middlewares/errorHandler';
 import { requestLogger } from '@/middlewares/requestLogger';
 import { correlationId } from '@/middlewares/correlationId';
 import { healthController } from '@/controllers/healthController';
 import { userRoutes } from '@/routes/userRoutes';
+import { swaggerSpec } from '@/config/swagger';
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(correlationId);
 app.use(requestLogger);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', healthController.check);
 app.use('/api/users', userRoutes);
