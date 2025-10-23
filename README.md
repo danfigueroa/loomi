@@ -1,224 +1,211 @@
-# 🏦 Loomi Banking - Sistema de Microsserviços
+# Sistema de Microsserviços Loomi
 
-Sistema bancário moderno desenvolvido com arquitetura de microsserviços, utilizando Clean Architecture, TypeScript e Node.js 22.
+Sistema de microsserviços para transações financeiras desenvolvido com Node.js, TypeScript e Clean Architecture.
 
-## 📋 Visão Geral
+## 🏗️ Arquitetura
 
-Este projeto implementa um sistema bancário completo com dois microsserviços principais:
-- **customers-service**: Gerenciamento de clientes e dados bancários
-- **transactions-service**: Processamento de transações financeiras
+O sistema é composto por dois microsserviços principais:
 
-## 🛠 Tecnologias
+- **customers-service** (Porta 3001): Gerenciamento de usuários e autenticação
+- **transactions-service** (Porta 3002): Processamento de transações financeiras
 
-- **Node.js 22** - Runtime JavaScript
-- **TypeScript** - Linguagem de programação
-- **Prisma** - ORM moderno para TypeScript
-- **PostgreSQL** - Banco de dados principal
-- **Redis** - Cache e sessões
-- **Express.js** - Framework web
-- **JWT** - Autenticação
-- **Jest** - Testes unitários e integração
+### Tecnologias Utilizadas
 
-## 🏗 Arquitetura
+- **Node.js** + **TypeScript**
+- **Express.js** para APIs REST
+- **Prisma** como ORM
+- **PostgreSQL** como banco de dados
+- **Redis** para cache e sessões
+- **Docker** + **Docker Compose** para containerização
+- **Nginx** como proxy reverso e load balancer
+- **Jest** para testes de integração
 
-O projeto segue os princípios da **Clean Architecture**:
+## 🚀 Funcionalidades Implementadas
 
-```
-src/
-├── domain/          # Entidades e regras de negócio
-├── application/     # Casos de uso e serviços
-├── infrastructure/  # Implementações externas
-├── presentation/    # Controllers e rotas
-└── shared/         # Utilitários compartilhados
-```
+### Etapa 4: Comunicação entre Microsserviços
 
-## 🚀 Configuração do Ambiente
+✅ **Comunicação HTTP**
+- Cliente HTTP no transactions-service para comunicar com customers-service
+- Health checks em ambos os serviços (`/health`)
+- Timeout e retry policies configurados
+- Validação de usuário no transactions-service via customers-service
+
+✅ **Resiliência**
+- Circuit breaker pattern implementado
+- Retry com backoff exponencial
+- Fallback strategies para falhas de comunicação
+
+✅ **Observabilidade**
+- Correlation IDs para rastreamento distribuído de requests
+- Logs estruturados com Winston
+- Health checks detalhados com status de componentes
+
+✅ **Infraestrutura**
+- Docker Compose configurado para todos os serviços
+- Networking entre containers
+- Nginx como proxy reverso
+- Variáveis de ambiente organizadas
+
+## 🛠️ Configuração e Execução
 
 ### Pré-requisitos
 
-- Node.js 22+
-- PostgreSQL 14+
-- Redis 6+
-- npm ou yarn
+- Node.js 18+
+- Docker e Docker Compose
+- PostgreSQL (ou usar via Docker)
+- Redis (ou usar via Docker)
 
-### 🔐 Configuração de Segurança
+### Instalação
 
-**⚠️ IMPORTANTE: Configuração das Variáveis de Ambiente**
-
-Antes de executar o projeto, você deve configurar as variáveis de ambiente para cada microsserviço:
-
-#### 1. Customers Service
-
-Copie o arquivo de exemplo e configure suas variáveis:
+1. Clone o repositório e instale as dependências:
 ```bash
-cd customers-service
+npm run setup
+```
+
+2. Configure as variáveis de ambiente:
+```bash
 cp .env.example .env
+# Edite o arquivo .env com suas configurações
 ```
 
-Edite o arquivo `.env` com suas configurações:
-```env
-# Database
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/customers_db?schema=public"
-
-# Redis
-REDIS_URL="redis://localhost:6379"
-
-# JWT - ALTERE ESTA CHAVE EM PRODUÇÃO
-JWT_SECRET=sua-chave-secreta-super-forte-aqui
-
-# Server
-PORT=3001
-NODE_ENV=development
+3. Execute as migrações do banco de dados:
+```bash
+npm run prisma:generate
+npm run prisma:migrate
 ```
 
-#### 2. Transactions Service
+### Execução em Desenvolvimento
 
 ```bash
-cd transactions-service
-cp .env.example .env
-```
-
-Configure o arquivo `.env`:
-```env
-# Database
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/transactions_db?schema=public"
-
-# Redis
-REDIS_URL="redis://localhost:6379"
-
-# JWT - USE A MESMA CHAVE DO CUSTOMERS SERVICE
-JWT_SECRET=sua-chave-secreta-super-forte-aqui
-
-# External Services
-CUSTOMERS_SERVICE_URL=http://localhost:3001
-
-# Server
-PORT=3002
-NODE_ENV=development
-```
-
-### 🔒 Segurança das Variáveis de Ambiente
-
-- ✅ **Arquivos `.env` estão no `.gitignore`** - Não serão commitados
-- ✅ **Use `.env.example`** como referência para configuração
-- ⚠️ **NUNCA commite arquivos `.env`** com dados reais
-- 🔑 **Altere `JWT_SECRET`** em produção para uma chave forte
-- 🔐 **Use senhas seguras** para banco de dados em produção
-
-### 📦 Instalação
-
-1. **Clone o repositório**
-```bash
-git clone <repository-url>
-cd loomi
-```
-
-2. **Instale as dependências**
-```bash
-# Instalar dependências do projeto raiz
-npm install
-
-# Instalar dependências dos microsserviços
-cd customers-service && npm install
-cd ../transactions-service && npm install
-```
-
-3. **Configure os bancos de dados**
-```bash
-# Customers Service
-cd customers-service
-npx prisma generate
-npx prisma db push
-npx prisma db seed
-
-# Transactions Service
-cd ../transactions-service
-npx prisma generate
-npx prisma db push
-npx prisma db seed
-```
-
-4. **Execute os serviços**
-```bash
-# Terminal 1 - Customers Service
-cd customers-service
+# Executar ambos os serviços
 npm run dev
 
-# Terminal 2 - Transactions Service
-cd transactions-service
-npm run dev
+# Ou executar individualmente
+npm run dev:customers
+npm run dev:transactions
+```
+
+### Execução com Docker
+
+```bash
+# Build e execução completa
+npm run docker:build
+npm run docker:up
+
+# Visualizar logs
+npm run docker:logs
+
+# Parar os serviços
+npm run docker:down
 ```
 
 ## 🧪 Testes
 
+### Testes de Integração
+
 ```bash
-# Executar testes
-npm test
-
-# Testes com coverage
-npm run test:coverage
-
-# Testes em modo watch
-npm run test:watch
+# Executar testes de integração entre serviços
+npm run test:integration
 ```
 
-## 📚 Documentação da API
+Os testes cobrem:
+- Health checks de ambos os serviços
+- Comunicação entre microsserviços
+- Validação de usuários via customers-service
+- Propagação de correlation IDs
+- Comportamento do circuit breaker
 
-### Customers Service (Port 3001)
+## 📡 Endpoints
 
-- `GET /api/health` - Health check
-- `POST /api/users` - Criar usuário
-- `GET /api/users/:id` - Buscar usuário
-- `PUT /api/users/:id` - Atualizar usuário
+### Customers Service (Porta 3001)
+
+- `GET /health` - Health check do serviço
+- `POST /api/users/register` - Registro de usuário
+- `POST /api/users/login` - Login de usuário
+- `GET /api/users/profile` - Perfil do usuário
+- `PUT /api/users/profile` - Atualizar perfil
 - `DELETE /api/users/:id` - Deletar usuário
 
-### Transactions Service (Port 3002)
+### Transactions Service (Porta 3002)
 
-- `GET /api/health` - Health check
+- `GET /health` - Health check do serviço
 - `POST /api/transactions` - Criar transação
-- `GET /api/transactions/:id` - Buscar transação
-- `GET /api/transactions/user/:userId` - Transações do usuário
+- `GET /api/transactions/:id` - Buscar transação por ID
+- `GET /api/transactions/user/:userId` - Buscar transações do usuário
 
-## 🔧 Scripts Disponíveis
+### Nginx Proxy (Porta 80)
 
-```bash
-npm run dev          # Desenvolvimento
-npm run build        # Build para produção
-npm run start        # Executar build
-npm run test         # Executar testes
-npm run lint         # Verificar código
-npm run format       # Formatar código
-```
+- `GET /health` - Health check do proxy
+- `/api/customers/*` - Proxy para customers-service
+- `/api/transactions/*` - Proxy para transactions-service
 
-## 📁 Estrutura do Projeto
+## 🔧 Configurações Avançadas
 
-```
-loomi/
-├── customers-service/       # Microsserviço de clientes
-├── transactions-service/    # Microsserviço de transações
-├── shared/                 # Código compartilhado
-├── docker/                 # Configurações Docker
-├── PLANEJAMENTO.md         # Plano de desenvolvimento
-├── rules.MD               # Regras do projeto
-└── README.md              # Este arquivo
-```
+### Circuit Breaker
 
-## 🚨 Avisos de Segurança
+O circuit breaker está configurado com:
+- **Failure Threshold**: 5 falhas consecutivas
+- **Recovery Timeout**: 60 segundos
+- **Request Timeout**: 5 segundos
 
-- 🔐 **Nunca commite arquivos `.env`**
-- 🔑 **Use chaves JWT fortes em produção**
-- 🛡️ **Configure CORS adequadamente**
-- 🔒 **Use HTTPS em produção**
-- 📝 **Monitore logs de segurança**
+### Retry Policy
 
-## 📞 Suporte
+- **Max Retries**: 3 tentativas
+- **Backoff**: Exponencial (1s, 2s, 4s)
+- **Jitter**: Aleatório para evitar thundering herd
 
-Para dúvidas ou problemas:
-1. Verifique a documentação
-2. Consulte os logs dos serviços
-3. Verifique as configurações de ambiente
-4. Entre em contato com a equipe de desenvolvimento
+### Health Checks
 
----
+Cada serviço monitora:
+- Status da aplicação
+- Conexão com banco de dados
+- Conexão com Redis
+- Comunicação entre serviços (transactions-service)
 
-**Desenvolvido com ❤️ pela equipe Loomi Banking**
+## 🐳 Docker
+
+### Serviços Configurados
+
+- **postgres**: Banco de dados PostgreSQL
+- **redis**: Cache e sessões
+- **customers-service**: Microsserviço de usuários
+- **transactions-service**: Microsserviço de transações
+- **nginx**: Proxy reverso e load balancer
+
+### Networking
+
+Todos os serviços estão na rede `loomi-network` permitindo comunicação interna segura.
+
+## 📊 Monitoramento
+
+### Correlation IDs
+
+Cada request recebe um correlation ID único que é propagado entre os serviços, facilitando o rastreamento distribuído.
+
+### Logs Estruturados
+
+Logs em formato JSON com informações contextuais:
+- Correlation ID
+- Service name
+- Timestamp
+- Log level
+- Message
+- Metadata adicional
+
+## 🔒 Segurança
+
+- Autenticação JWT
+- Rate limiting configurado
+- CORS habilitado
+- Helmet para headers de segurança
+- Validação de entrada com Joi
+- Sanitização de dados
+
+## 📈 Próximas Etapas
+
+- [ ] Implementar métricas com Prometheus
+- [ ] Adicionar tracing distribuído com Jaeger
+- [ ] Configurar alertas e monitoramento
+- [ ] Implementar cache distribuído
+- [ ] Adicionar testes de carga
+- [ ] Configurar CI/CD pipeline

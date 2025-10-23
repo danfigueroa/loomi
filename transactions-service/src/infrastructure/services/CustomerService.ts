@@ -1,46 +1,63 @@
-import axios from 'axios';
 import { ICustomerService, Customer } from '@/domain/interfaces/ICustomerService';
 import { AppError } from '@/shared/errors/AppError';
+import { CustomersServiceClient } from '@/infrastructure/http/CustomersServiceClient';
+import { logger } from '@/config/logger';
 
 export class CustomerService implements ICustomerService {
-  private baseURL: string;
+  private customersClient: CustomersServiceClient;
 
   constructor() {
-    this.baseURL = process.env.CUSTOMERS_SERVICE_URL || 'http://localhost:3001';
+    this.customersClient = new CustomersServiceClient();
   }
 
-  async validateUser(userId: string): Promise<Customer> {
+  async validateUser(userId: string, correlationId?: string): Promise<Customer> {
     try {
-      const response = await axios.get(`${this.baseURL}/api/users/${userId}`, {
-        timeout: 5000,
-      });
+      logger.info('Validating user via customers service', { userId, correlationId });
+      
+      const user = await this.customersClient.getUserById(userId, correlationId);
 
-      if (!response.data || !response.data.id) {
+      if (!user) {
         throw new AppError('User not found', 404);
       }
+
+      if (!user.isActive) {
+        throw new AppError('User is inactive', 400);
+      }
+
+      logger.info('User validation successful', { userId, correlationId });
 
       return {
-        id: response.data.id,
-        name: response.data.name,
-        email: response.data.email,
-        address: response.data.address,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        address: '',
       };
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new AppError('User not found', 404);
+      logger.error('User validation failed', { 
+        userId, 
+        correlationId, 
+        error: error.message 
+      });
+
+      if (error instanceof AppError) {
+        throw error;
       }
-      
-      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
-        throw new AppError('Customer service unavailable', 503);
+
+      if (error.message.includes('Circuit breaker is OPEN')) {
+        throw new AppError('Customer service temporarily unavailable', 503);
+      }
+
+      if (error.message.includes('timeout')) {
+        throw new AppError('Customer service timeout', 503);
       }
 
       throw new AppError('Failed to validate user', 500);
     }
   }
 
-  async getUserById(userId: string): Promise<Customer | null> {
+  async getUserById(userId: string, correlationId?: string): Promise<Customer | null> {
     try {
-      return await this.validateUser(userId);
+      return await this.validateUser(userId, correlationId);
     } catch (error: any) {
       if (error.statusCode === 404) {
         return null;

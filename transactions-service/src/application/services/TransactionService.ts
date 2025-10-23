@@ -11,7 +11,7 @@ export class TransactionService implements ITransactionService {
     private customerService: ICustomerService
   ) {}
 
-  async createTransaction(data: CreateTransactionRequest): Promise<Transaction> {
+  async createTransaction(data: CreateTransactionRequest, correlationId?: string): Promise<Transaction> {
     if (data.amount <= 0) {
       throw new AppError('Amount must be greater than zero', 400);
     }
@@ -20,8 +20,8 @@ export class TransactionService implements ITransactionService {
       throw new AppError('Cannot transfer to the same user', 400);
     }
 
-    await this.customerService.validateUser(data.fromUserId);
-    await this.customerService.validateUser(data.toUserId);
+    await this.customerService.validateUser(data.fromUserId, correlationId);
+    await this.customerService.validateUser(data.toUserId, correlationId);
 
     const transactionData = {
       ...data,
@@ -41,8 +41,8 @@ export class TransactionService implements ITransactionService {
     return transaction;
   }
 
-  async getTransactionsByUserId(userId: string, page = 1, limit = 10): Promise<Transaction[]> {
-    await this.customerService.validateUser(userId);
+  async getTransactionsByUserId(userId: string, page = 1, limit = 10, correlationId?: string): Promise<Transaction[]> {
+    await this.customerService.validateUser(userId, correlationId);
     
     return await this.transactionRepository.findByUserId(userId, page, limit);
   }

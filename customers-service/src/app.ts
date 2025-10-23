@@ -7,7 +7,7 @@ import { errorHandler } from '@/middlewares/errorHandler';
 import { requestLogger } from '@/middlewares/requestLogger';
 import { correlationId } from '@/middlewares/correlationId';
 import { healthController } from '@/controllers/healthController';
-import { transactionRoutes } from '@/routes/transactionRoutes';
+import { userRoutes } from '@/routes/userRoutes';
 
 const app = express();
 
@@ -29,7 +29,7 @@ app.use(correlationId);
 app.use(requestLogger);
 
 app.get('/health', healthController.check);
-app.use('/api/transactions', transactionRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(errorHandler);
 

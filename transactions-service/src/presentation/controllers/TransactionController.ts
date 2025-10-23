@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ITransactionService } from '@/domain/interfaces/ITransactionService';
 import { AppError } from '@/shared/errors/AppError';
+import { RequestWithCorrelationId } from '@/middlewares/correlationId';
 import { 
   createTransactionSchema, 
   getTransactionByIdSchema, 
@@ -11,7 +12,7 @@ import {
 export class TransactionController {
   constructor(private transactionService: ITransactionService) {}
 
-  async createTransaction(req: Request, res: Response): Promise<void> {
+  async createTransaction(req: RequestWithCorrelationId, res: Response): Promise<void> {
     try {
       const { error, value } = createTransactionSchema.validate(req.body);
       
@@ -19,7 +20,7 @@ export class TransactionController {
         throw new AppError(error.details[0].message, 400);
       }
 
-      const transaction = await this.transactionService.createTransaction(value);
+      const transaction = await this.transactionService.createTransaction(value, req.correlationId);
       
       res.status(201).json({
         success: true,
@@ -50,7 +51,7 @@ export class TransactionController {
     }
   }
 
-  async getTransactionsByUserId(req: Request, res: Response): Promise<void> {
+  async getTransactionsByUserId(req: RequestWithCorrelationId, res: Response): Promise<void> {
     try {
       const paramsValidation = getTransactionsByUserSchema.validate(req.params);
       const queryValidation = paginationSchema.validate(req.query);
@@ -69,7 +70,8 @@ export class TransactionController {
       const transactions = await this.transactionService.getTransactionsByUserId(
         userId, 
         page, 
-        limit
+        limit,
+        req.correlationId
       );
       
       res.status(200).json({

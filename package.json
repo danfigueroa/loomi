@@ -1,7 +1,7 @@
 {
-  "name": "loomi-banking-microservices",
+  "name": "loomi-microservices",
   "version": "1.0.0",
-  "description": "Sistema bancário inovador com microsserviços para gerenciar transferências e clientes",
+  "description": "Sistema de microsserviços para transações financeiras",
   "main": "index.js",
   "scripts": {
     "dev:customers": "cd customers-service && npm run dev",
@@ -10,33 +10,51 @@
     "build:customers": "cd customers-service && npm run build",
     "build:transactions": "cd transactions-service && npm run build",
     "build": "npm run build:customers && npm run build:transactions",
-    "test:customers": "cd customers-service && npm test",
-    "test:transactions": "cd transactions-service && npm test",
-    "test": "npm run test:customers && npm run test:transactions",
+    "start:customers": "cd customers-service && npm start",
+    "start:transactions": "cd transactions-service && npm start",
+    "start": "concurrently \"npm run start:customers\" \"npm run start:transactions\"",
+    "test:integration": "jest tests/integration --testTimeout=30000",
+    "test": "npm run test:integration",
+    "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
-    "setup": "npm run install:customers && npm run install:transactions",
-    "install:customers": "cd customers-service && npm install",
-    "install:transactions": "cd transactions-service && npm install"
+    "setup": "npm install && cd customers-service && npm install && cd ../transactions-service && npm install",
+    "prisma:generate": "cd customers-service && npx prisma generate && cd ../transactions-service && npx prisma generate",
+    "prisma:migrate": "cd customers-service && npx prisma migrate dev && cd ../transactions-service && npx prisma migrate dev"
   },
   "keywords": [
     "microservices",
-    "banking",
     "nodejs",
     "typescript",
     "clean-architecture",
+    "docker",
     "prisma",
-    "postgresql",
     "redis"
   ],
-  "author": "Loomi Banking Team",
+  "author": "Loomi Team",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.6.3",
+    "@types/uuid": "^9.0.4",
+    "concurrently": "^8.2.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
   },
-  "engines": {
-    "node": ">=22.0.0",
-    "npm": ">=10.0.0"
+  "dependencies": {
+    "axios": "^1.5.0",
+    "uuid": "^9.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/tests"],
+    "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+    "collectCoverageFrom": [
+      "tests/**/*.ts",
+      "!tests/**/*.d.ts"
+    ]
   }
 }
