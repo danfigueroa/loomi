@@ -1,0 +1,42 @@
+{
+  "name": "loomi-banking-microservices",
+  "version": "1.0.0",
+  "description": "Sistema bancário inovador com microsserviços para gerenciar transferências e clientes",
+  "main": "index.js",
+  "scripts": {
+    "dev:customers": "cd customers-service && npm run dev",
+    "dev:transactions": "cd transactions-service && npm run dev",
+    "dev": "concurrently \"npm run dev:customers\" \"npm run dev:transactions\"",
+    "build:customers": "cd customers-service && npm run build",
+    "build:transactions": "cd transactions-service && npm run build",
+    "build": "npm run build:customers && npm run build:transactions",
+    "test:customers": "cd customers-service && npm test",
+    "test:transactions": "cd transactions-service && npm test",
+    "test": "npm run test:customers && npm run test:transactions",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "setup": "npm run install:customers && npm run install:transactions",
+    "install:customers": "cd customers-service && npm install",
+    "install:transactions": "cd transactions-service && npm install"
+  },
+  "keywords": [
+    "microservices",
+    "banking",
+    "nodejs",
+    "typescript",
+    "clean-architecture",
+    "prisma",
+    "postgresql",
+    "redis"
+  ],
+  "author": "Loomi Banking Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  }
+}
