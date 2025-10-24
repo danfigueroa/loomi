@@ -16,6 +16,7 @@ O sistema é composto por dois microsserviços principais:
 - **Prisma** como ORM
 - **PostgreSQL** como banco de dados
 - **Redis** para cache e sessões
+- **RabbitMQ** para mensageria assíncrona
 - **Docker** + **Docker Compose** para containerização
 - **Nginx** como proxy reverso e load balancer
 - **Jest** para testes unitários e de integração
@@ -33,6 +34,13 @@ O sistema é composto por dois microsserviços principais:
 - Health checks em ambos os serviços (`/health`)
 - Timeout e retry policies configurados
 - Validação de usuário no transactions-service via customers-service
+
+✅ **Mensageria Assíncrona (RabbitMQ)**
+- Publisher/Subscriber pattern implementado
+- Eventos de transações (criação, processamento, cancelamento)
+- Eventos de usuários (dados bancários, autenticação)
+- Filas dedicadas para cada tipo de evento
+- Health checks para RabbitMQ integrados
 
 ✅ **Resiliência**
 - Circuit breaker pattern implementado
@@ -237,14 +245,18 @@ Cada serviço monitora:
 - Status da aplicação
 - Conexão com banco de dados
 - Conexão com Redis
+- Conexão com RabbitMQ
 - Comunicação entre serviços (transactions-service)
 
 ## 🐳 Docker
+
+### Docker
 
 ### Serviços Configurados
 
 - **postgres**: Banco de dados PostgreSQL
 - **redis**: Cache e sessões
+- **rabbitmq**: Message broker para comunicação assíncrona
 - **customers-service**: Microsserviço de usuários
 - **transactions-service**: Microsserviço de transações
 - **nginx**: Proxy reverso e load balancer
@@ -341,6 +353,56 @@ docker-compose -f docker-compose.prod.yml up -d
 **Desenvolvido com ❤️ seguindo Clean Architecture e melhores práticas de microsserviços.**
 - Validação de entrada com Joi
 - Sanitização de dados
+
+## 🔄 Mensageria com RabbitMQ
+
+### Arquitetura de Eventos
+
+O sistema utiliza RabbitMQ para comunicação assíncrona entre microsserviços através de eventos:
+
+#### Eventos de Transações
+- **TransactionCreated**: Disparado quando uma transação é criada
+- **TransactionProcessed**: Disparado quando uma transação é processada com sucesso
+- **TransactionCancelled**: Disparado quando uma transação é cancelada
+
+#### Eventos de Usuários
+- **BankingDataUpdated**: Disparado quando dados bancários são atualizados
+- **AuthenticationEvent**: Disparado em eventos de autenticação
+
+### Configuração
+
+```typescript
+// Configuração RabbitMQ
+const rabbitmqConfig = {
+  url: process.env.RABBITMQ_URL || 'amqp://localhost:5672',
+  queues: {
+    transactionCreated: 'transaction.created',
+    transactionProcessed: 'transaction.processed',
+    transactionCancelled: 'transaction.cancelled',
+    bankingDataUpdated: 'user.banking.updated',
+    authenticationEvents: 'user.authentication'
+  },
+  exchanges: {
+    transactions: 'transactions.exchange',
+    users: 'users.exchange'
+  }
+};
+```
+
+### Publishers e Subscribers
+
+Cada serviço implementa publishers para publicar eventos e subscribers para consumir eventos relevantes:
+
+- **customers-service**: Publica eventos de usuários e dados bancários
+- **transactions-service**: Publica eventos de transações e consome eventos de usuários
+
+### Testes
+
+Os testes de mensageria incluem:
+- Testes unitários para publishers e subscribers
+- Mocks para RabbitMQ
+- Validação de estrutura de eventos
+- Testes de integração com RabbitMQ real
 
 ## 📈 Próximas Etapas
 

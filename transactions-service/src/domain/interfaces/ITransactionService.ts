@@ -11,7 +11,7 @@ export interface CreateTransactionRequest {
 export interface ITransactionService {
   createTransaction(data: CreateTransactionRequest): Promise<Transaction>;
   getTransactionById(id: string): Promise<Transaction>;
-  getTransactionsByUserId(userId: string, page?: number, limit?: number): Promise<Transaction[]>;
+  getTransactionsByUserId(userId: string, page?: number, limit?: number): Promise<{ transactions: Transaction[], total: number }>;
   processTransaction(id: string): Promise<Transaction>;
   cancelTransaction(id: string): Promise<Transaction>;
 }

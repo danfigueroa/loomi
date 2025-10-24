@@ -3,6 +3,11 @@ import { app } from '../../src/app';
 import { TransactionStatus } from '../../src/domain/entities/Transaction';
 import jwt from 'jsonwebtoken';
 
+// Mock rate limiter to avoid interference with tests
+jest.mock('../../src/shared/middlewares/rateLimiter', () => ({
+  createRateLimiter: jest.fn().mockReturnValue((_req: any, _res: any, next: any) => next())
+}));
+
 // Mock external dependencies for integration tests
 jest.mock('../../src/config/database', () => ({
   DatabaseConnection: {
@@ -12,47 +17,58 @@ jest.mock('../../src/config/database', () => ({
       $disconnect: jest.fn().mockResolvedValue(undefined),
       transaction: {
         findMany: jest.fn().mockImplementation((params) => {
-          // Return mock transactions for user queries
+         // Return mock transactions for user queries
+         if (params?.where?.OR) {
+           // Check if the user has transactions
+           const hasTransactions = params.where.OR.some((condition: any) => 
+             condition.fromUserId === '123e4567-e89b-12d3-a456-426614174000' || 
+             condition.toUserId === '123e4567-e89b-12d3-a456-426614174000'
+           );
+           
+           if (hasTransactions) {
+             const mockTransactions = [
+               {
+                 id: '550e8400-e29b-41d4-a716-446655440001',
+                 fromUserId: '123e4567-e89b-12d3-a456-426614174000',
+                 toUserId: 'user-456',
+                 amount: 50,
+                 description: 'Transaction 1',
+                 status: 'PENDING',
+                 type: 'TRANSFER',
+                 createdAt: new Date(),
+                 updatedAt: new Date()
+               },
+               {
+                 id: '550e8400-e29b-41d4-a716-446655440003',
+                 fromUserId: '550e8400-e29b-41d4-a716-446655440003',
+                 toUserId: '123e4567-e89b-12d3-a456-426614174000',
+                 amount: 75,
+                 description: 'Transaction 2',
+                 status: 'PENDING',
+                 type: 'TRANSFER',
+                 createdAt: new Date(),
+                 updatedAt: new Date()
+               }
+             ];
+             
+             // Handle pagination
+             const limit = params.take || 10;
+             const skip = params.skip || 0;
+             return Promise.resolve(mockTransactions.slice(skip, skip + limit));
+           }
+         }
+         return Promise.resolve([]);
+       }),
+       count: jest.fn().mockImplementation((params) => {
+          // Return count for user queries
           if (params?.where?.OR) {
-            // Check if the user has transactions
-             const hasTransactions = params.where.OR.some((condition: any) => 
-               condition.fromUserId === '123e4567-e89b-12d3-a456-426614174000' || 
-               condition.toUserId === '123e4567-e89b-12d3-a456-426614174000'
-             );
-            
-            if (hasTransactions) {
-              const mockTransactions = [
-                {
-                  id: '550e8400-e29b-41d4-a716-446655440001',
-                  fromUserId: '123e4567-e89b-12d3-a456-426614174000',
-                  toUserId: 'user-456',
-                  amount: 50,
-                  description: 'Transaction 1',
-                  status: 'PENDING',
-                  type: 'TRANSFER',
-                  createdAt: new Date(),
-                  updatedAt: new Date()
-                },
-                {
-                  id: '550e8400-e29b-41d4-a716-446655440003',
-                  fromUserId: '550e8400-e29b-41d4-a716-446655440003',
-                  toUserId: '123e4567-e89b-12d3-a456-426614174000',
-                  amount: 75,
-                  description: 'Transaction 2',
-                  status: 'PENDING',
-                  type: 'TRANSFER',
-                  createdAt: new Date(),
-                  updatedAt: new Date()
-                }
-              ];
-              
-              // Handle pagination
-              const limit = params.take || 10;
-              const skip = params.skip || 0;
-              return Promise.resolve(mockTransactions.slice(skip, skip + limit));
-            }
+            const hasTransactions = params.where.OR.some((condition: any) => 
+              condition.fromUserId === '123e4567-e89b-12d3-a456-426614174000' || 
+              condition.toUserId === '123e4567-e89b-12d3-a456-426614174000'
+            );
+            return Promise.resolve(hasTransactions ? 2 : 0);
           }
-          return Promise.resolve([]);
+          return Promise.resolve(0);
         }),
         findUnique: jest.fn().mockImplementation((params) => {
           if (params?.where?.id && params.where.id === '550e8400-e29b-41d4-a716-446655440002') {
@@ -140,6 +156,17 @@ jest.mock('../../src/config/database', () => ({
            }
          }
          return Promise.resolve([]);
+       }),
+      count: jest.fn().mockImplementation((params) => {
+         // Return count for user queries
+         if (params?.where?.OR) {
+           const hasTransactions = params.where.OR.some((condition: any) => 
+             condition.fromUserId === '123e4567-e89b-12d3-a456-426614174000' || 
+             condition.toUserId === '123e4567-e89b-12d3-a456-426614174000'
+           );
+           return Promise.resolve(hasTransactions ? 2 : 0);
+         }
+         return Promise.resolve(0);
        }),
       findUnique: jest.fn().mockImplementation((params) => {
         if (params?.where?.id && params.where.id === '550e8400-e29b-41d4-a716-446655440002') {

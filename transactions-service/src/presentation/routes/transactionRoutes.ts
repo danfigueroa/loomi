@@ -14,9 +14,8 @@ const customerService = new CustomerService();
 const transactionService = new TransactionService(transactionRepository, customerService);
 const transactionController = new TransactionController(transactionService);
 
-// Disable rate limiting in test environment
 const transactionRateLimit = process.env['NODE_ENV'] === 'test' 
-  ? createRateLimiter(60000, 10000) // Very high limit for tests
+  ? createRateLimiter(60000, 5)
   : createRateLimiter(60000, 10);
 
 router.post(

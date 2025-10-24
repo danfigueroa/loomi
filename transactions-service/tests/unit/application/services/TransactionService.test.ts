@@ -17,6 +17,7 @@ describe('TransactionService', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findByUserId: jest.fn(),
+      countByUserId: jest.fn(),
       updateStatus: jest.fn(),
       findAll: jest.fn()
     };
@@ -160,6 +161,7 @@ describe('TransactionService', () => {
       
       mockCustomerService.validateUser.mockResolvedValue(mockCustomer);
       mockTransactionRepository.findByUserId.mockResolvedValue(mockTransactions);
+      mockTransactionRepository.countByUserId.mockResolvedValue(2);
 
       const result = await transactionService.getTransactionsByUserId(
         'user-id',
@@ -169,7 +171,8 @@ describe('TransactionService', () => {
 
       expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user-id');
       expect(mockTransactionRepository.findByUserId).toHaveBeenCalledWith('user-id', 1, 10);
-      expect(result).toEqual(mockTransactions);
+      expect(mockTransactionRepository.countByUserId).toHaveBeenCalledWith('user-id');
+      expect(result).toEqual({ transactions: mockTransactions, total: 2 });
     });
 
     it('should use default pagination values', async () => {
@@ -177,10 +180,12 @@ describe('TransactionService', () => {
       
       mockCustomerService.validateUser.mockResolvedValue(mockCustomer);
       mockTransactionRepository.findByUserId.mockResolvedValue([]);
+      mockTransactionRepository.countByUserId.mockResolvedValue(0);
 
       await transactionService.getTransactionsByUserId('user-id');
 
       expect(mockTransactionRepository.findByUserId).toHaveBeenCalledWith('user-id', 1, 10);
+      expect(mockTransactionRepository.countByUserId).toHaveBeenCalledWith('user-id');
     });
 
     it('should throw error when user validation fails', async () => {

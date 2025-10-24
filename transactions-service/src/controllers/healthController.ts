@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { DatabaseConnection } from '../config/database';
 import { RedisConnection } from '../config/redis';
 import { logger } from '../config/logger';
+import { IMessageBroker } from '../domain/interfaces/IMessageBroker';
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy';
@@ -13,21 +14,25 @@ interface HealthStatus {
     database: 'healthy' | 'unhealthy';
     redis: 'healthy' | 'unhealthy';
     customersService: 'healthy' | 'unhealthy';
+    rabbitmq: 'healthy' | 'unhealthy';
   };
 }
 
 class HealthController {
+  private messageBroker?: IMessageBroker;
+
+  setMessageBroker(messageBroker: IMessageBroker): void {
+    this.messageBroker = messageBroker;
+  }
+
   async check(_req: Request, res: Response): Promise<void> {
-    const startTime = Date.now();
-    
     try {
-      logger.info('Health check endpoint called', { 
+      logger.info('Health check requested', {
         method: _req.method,
         url: _req.url,
         userAgent: _req.get('User-Agent')
       });
 
-      // In test environment, return healthy status immediately
       if (process.env['NODE_ENV'] === 'test') {
         const healthStatus: HealthStatus = {
           status: 'healthy',
@@ -38,7 +43,8 @@ class HealthController {
           checks: {
             database: 'healthy',
             redis: 'healthy',
-            customersService: 'healthy'
+            customersService: 'healthy',
+            rabbitmq: 'healthy'
           }
         };
 
@@ -51,7 +57,6 @@ class HealthController {
         logLevel: process.env['LOG_LEVEL']
       });
 
-      // Perform health checks sequentially to better debug issues
       let dbHealthy = false;
       let redisHealthy = false;
       let customersHealthy = false;
@@ -62,10 +67,7 @@ class HealthController {
         dbHealthy = true;
         logger.info('Database health check passed');
       } catch (error) {
-        logger.error('Database health check failed', { 
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
+        logger.error('Database health check failed', { error: error instanceof Error ? error.message : String(error) });
       }
 
       try {
@@ -74,10 +76,7 @@ class HealthController {
         redisHealthy = true;
         logger.info('Redis health check passed');
       } catch (error) {
-        logger.error('Redis health check failed', { 
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
+        logger.error('Redis health check failed', { error: error instanceof Error ? error.message : String(error) });
       }
 
       try {
@@ -86,16 +85,13 @@ class HealthController {
         customersHealthy = true;
         logger.info('Customers service health check passed');
       } catch (error) {
-        logger.error('Customers service health check failed', { 
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
+        logger.error('Customers service health check failed', { error: error instanceof Error ? error.message : String(error) });
       }
 
-      const isHealthy = dbHealthy && redisHealthy && customersHealthy;
-
+      const allHealthy = dbHealthy && redisHealthy && customersHealthy;
+      
       const healthStatus: HealthStatus = {
-        status: isHealthy ? 'healthy' : 'unhealthy',
+        status: allHealthy ? 'healthy' : 'unhealthy',
         timestamp: new Date().toISOString(),
         service: 'transactions-service',
         version: '1.0.0',
@@ -103,24 +99,25 @@ class HealthController {
         checks: {
           database: dbHealthy ? 'healthy' : 'unhealthy',
           redis: redisHealthy ? 'healthy' : 'unhealthy',
-          customersService: customersHealthy ? 'healthy' : 'unhealthy'
+          customersService: customersHealthy ? 'healthy' : 'unhealthy',
+          rabbitmq: this.messageBroker?.isConnected() ? 'healthy' : 'unhealthy'
         }
       };
 
-      const responseTime = Date.now() - startTime;
       logger.info('Health check completed', { 
-        status: healthStatus.status, 
-        responseTime,
+        status: healthStatus.status,
         checks: healthStatus.checks
       });
 
-      res.status(isHealthy ? 200 : 503).json(healthStatus);
+      const statusCode = allHealthy ? 200 : 503;
+      res.status(statusCode).json(healthStatus);
+
     } catch (error) {
-      logger.error('Health check failed with exception', { 
+      logger.error('Health check error', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      
+
       const healthStatus: HealthStatus = {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -130,7 +127,8 @@ class HealthController {
         checks: {
           database: 'unhealthy',
           redis: 'unhealthy',
-          customersService: 'unhealthy'
+          customersService: 'unhealthy',
+          rabbitmq: 'unhealthy'
         }
       };
 
@@ -144,7 +142,6 @@ class HealthController {
       const db = DatabaseConnection.getInstance();
       logger.info('Database instance obtained');
       
-      // Use a simple query that doesn't require a specific table
       const result = await db.$queryRaw`SELECT 1 as test`;
       logger.info('Database health check passed', { result });
     } catch (error) {
@@ -164,9 +161,6 @@ class HealthController {
       logger.info('Redis instance obtained');
       
       const result = await redis.ping();
-      if (result !== 'PONG') {
-        throw new Error(`Redis ping returned: ${result}`);
-      }
       logger.info('Redis health check passed', { result });
     } catch (error) {
       logger.error('Redis connection error details', { 
@@ -188,12 +182,9 @@ class HealthController {
         timeout: 5000
       });
       
-      if (response.status !== 200) {
-        throw new Error(`Customers service returned status ${response.status}`);
-      }
       logger.info('Customers service health check passed', { 
         status: response.status,
-        url: customersServiceUrl 
+        data: response.data
       });
     } catch (error) {
       logger.error('Customers service connection error details', { 

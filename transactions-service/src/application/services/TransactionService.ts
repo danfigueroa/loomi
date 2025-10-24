@@ -2,13 +2,15 @@ import { Transaction, TransactionStatus } from '../../domain/entities/Transactio
 import { ITransactionService, CreateTransactionRequest } from '../../domain/interfaces/ITransactionService';
 import { ITransactionRepository } from '../../domain/interfaces/ITransactionRepository';
 import { ICustomerService } from '../../domain/interfaces/ICustomerService';
+import { ITransactionEventPublisher } from '../../domain/interfaces/IMessageBroker';
 import { AppError } from '../../shared/errors/AppError';
 import { v4 as uuidv4 } from 'uuid';
 
 export class TransactionService implements ITransactionService {
   constructor(
     private transactionRepository: ITransactionRepository,
-    private customerService: ICustomerService
+    private customerService: ICustomerService,
+    private transactionEventPublisher: ITransactionEventPublisher
   ) {}
 
   async createTransaction(data: CreateTransactionRequest): Promise<Transaction> {
@@ -28,7 +30,34 @@ export class TransactionService implements ITransactionService {
       externalReference: uuidv4(),
     };
 
-    return await this.transactionRepository.create(transactionData);
+    const transaction = await this.transactionRepository.create(transactionData);
+
+    // Publicar evento de transação criada
+    try {
+      const eventData: any = {
+        transactionId: transaction.id,
+        fromUserId: transaction.fromUserId,
+        toUserId: transaction.toUserId,
+        amount: transaction.amount,
+        type: transaction.type,
+        createdAt: transaction.createdAt,
+      };
+
+      if (transaction.description) {
+        eventData.description = transaction.description;
+      }
+
+      if (transaction.externalReference) {
+        eventData.correlationId = transaction.externalReference;
+      }
+
+      await this.transactionEventPublisher.publishTransactionCreated(transaction.id, eventData);
+    } catch (error) {
+      // Log do erro mas não falha a transação
+      console.error('Failed to publish transaction created event:', error);
+    }
+
+    return transaction;
   }
 
   async getTransactionById(id: string): Promise<Transaction> {
@@ -41,10 +70,15 @@ export class TransactionService implements ITransactionService {
     return transaction;
   }
 
-  async getTransactionsByUserId(userId: string, page = 1, limit = 10): Promise<Transaction[]> {
+  async getTransactionsByUserId(userId: string, page = 1, limit = 10): Promise<{ transactions: Transaction[], total: number }> {
     await this.customerService.validateUser(userId);
     
-    return await this.transactionRepository.findByUserId(userId, page, limit);
+    const [transactions, total] = await Promise.all([
+      this.transactionRepository.findByUserId(userId, page, limit),
+      this.transactionRepository.countByUserId(userId)
+    ]);
+
+    return { transactions, total };
   }
 
   async processTransaction(id: string): Promise<Transaction> {
@@ -54,11 +88,30 @@ export class TransactionService implements ITransactionService {
       throw new AppError('Transaction cannot be processed', 400);
     }
 
-    return await this.transactionRepository.updateStatus(
+    const updatedTransaction = await this.transactionRepository.updateStatus(
       id,
       TransactionStatus.PROCESSING,
       new Date()
     );
+
+    // Publicar evento de transação processada
+    try {
+      const processedEventData: any = {
+        transactionId: transaction.id,
+        status: TransactionStatus.PROCESSING,
+        processedAt: new Date(),
+      };
+
+      if (transaction.externalReference) {
+        processedEventData.correlationId = transaction.externalReference;
+      }
+
+      await this.transactionEventPublisher.publishTransactionProcessed(transaction.id, processedEventData);
+    } catch (error) {
+      console.error('Failed to publish transaction processed event:', error);
+    }
+
+    return updatedTransaction;
   }
 
   async cancelTransaction(id: string): Promise<Transaction> {

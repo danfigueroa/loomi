@@ -5,12 +5,13 @@ import { Transaction, TransactionStatus, TransactionType } from '../../src/domai
 import { AppError } from '../../src/shared/errors/AppError';
 
 const mockTransactionRepository: jest.Mocked<ITransactionRepository> = {
-  create: jest.fn(),
-  findById: jest.fn(),
-  findByUserId: jest.fn(),
-  updateStatus: jest.fn(),
-  findAll: jest.fn(),
-};
+    create: jest.fn(),
+    findById: jest.fn(),
+    findByUserId: jest.fn(),
+    countByUserId: jest.fn(),
+    updateStatus: jest.fn(),
+    findAll: jest.fn(),
+  };
 
 const mockCustomerService: jest.Mocked<ICustomerService> = {
   validateUser: jest.fn(),
@@ -147,12 +148,14 @@ describe('TransactionService', () => {
         email: 'john@example.com',
       });
       mockTransactionRepository.findByUserId.mockResolvedValue(mockTransactions);
+      mockTransactionRepository.countByUserId.mockResolvedValue(1);
 
       const result = await transactionService.getTransactionsByUserId(userId);
 
-      expect(result).toEqual(mockTransactions);
+      expect(result).toEqual({ transactions: mockTransactions, total: 1 });
       expect(mockCustomerService.validateUser).toHaveBeenCalledWith(userId);
       expect(mockTransactionRepository.findByUserId).toHaveBeenCalledWith(userId, 1, 10);
+      expect(mockTransactionRepository.countByUserId).toHaveBeenCalledWith(userId);
     });
 
     it('should throw error when user is invalid', async () => {

@@ -67,7 +67,7 @@ export class TransactionController {
       const { userId } = paramsValidation.value;
       const { page, limit } = queryValidation.value;
 
-      const transactions = await this.transactionService.getTransactionsByUserId(
+      const result = await this.transactionService.getTransactionsByUserId(
         userId, 
         page, 
         limit
@@ -75,11 +75,11 @@ export class TransactionController {
       
       res.status(200).json({
         success: true,
-        data: transactions,
+        data: result.transactions,
         pagination: {
           page,
           limit,
-          total: transactions.length,
+          total: result.total,
         },
       });
     } catch (error) {

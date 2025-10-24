@@ -28,7 +28,6 @@ class RedisConnection {
         logger.info('Redis connection closed');
       });
 
-      // Connect to Redis
       RedisConnection.instance.connect().catch((err) => {
         logger.error('Failed to connect to Redis', { error: err });
       });
@@ -39,8 +38,7 @@ class RedisConnection {
 
   public static async disconnect(): Promise<void> {
     if (RedisConnection.instance) {
-      await RedisConnection.instance.quit();
-      logger.info('Redis connection closed');
+      await RedisConnection.instance.disconnect();
     }
   }
 }

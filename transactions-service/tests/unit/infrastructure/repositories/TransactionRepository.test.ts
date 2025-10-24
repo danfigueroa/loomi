@@ -7,6 +7,7 @@ const mockPrisma = {
     create: jest.fn(),
     findUnique: jest.fn(),
     findMany: jest.fn(),
+    count: jest.fn(),
     update: jest.fn()
   }
 } as any;
@@ -282,6 +283,33 @@ describe('TransactionRepository', () => {
         skip: 10,
         take: 5
       });
+    });
+  });
+
+  describe('countByUserId', () => {
+    it('should return count of transactions for user', async () => {
+      mockPrisma.transaction.count.mockResolvedValue(5);
+
+      const result = await transactionRepository.countByUserId('user1');
+
+      expect(mockPrisma.transaction.count).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { fromUserId: 'user1' },
+            { toUserId: 'user1' }
+          ]
+        }
+      });
+
+      expect(result).toBe(5);
+    });
+
+    it('should return 0 when user has no transactions', async () => {
+      mockPrisma.transaction.count.mockResolvedValue(0);
+
+      const result = await transactionRepository.countByUserId('user-without-transactions');
+
+      expect(result).toBe(0);
     });
   });
 

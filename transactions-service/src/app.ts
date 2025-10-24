@@ -13,11 +13,10 @@ import { logger } from './config/logger';
 
 const app = express();
 
-// Disable rate limiting in test environment
 const limiter = process.env['NODE_ENV'] === 'test' 
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: 10000, // Very high limit for tests
+      max: 100000,
       message: 'Too many requests from this IP',
       standardHeaders: true,
       legacyHeaders: false,
@@ -43,18 +42,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', async (req, res) => {
   try {
-    logger.info('Health endpoint called directly', {
-      method: req.method,
-      url: req.url,
-      userAgent: req.get('User-Agent')
-    });
-    
-    // Check if response has already been sent
-    if (res.headersSent) {
-      logger.warn('Response already sent, skipping health check');
-      return;
-    }
-    
     await healthController.check(req, res);
   } catch (error) {
     logger.error('Health endpoint error:', {
@@ -62,7 +49,6 @@ app.get('/health', async (req, res) => {
       stack: error instanceof Error ? error.stack : undefined
     });
     
-    // Only send response if not already sent
     if (!res.headersSent) {
       res.status(503).json({
         status: 'unhealthy',

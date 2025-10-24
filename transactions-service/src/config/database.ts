@@ -27,15 +27,13 @@ class DatabaseConnection {
         ],
       });
 
-      if (process.env['NODE_ENV'] === 'development') {
-        (DatabaseConnection.instance as any).$on('query', (e: any) => {
-          logger.debug('Database Query', {
-            query: e.query,
-            params: e.params,
-            duration: `${e.duration}ms`,
-          });
+      (DatabaseConnection.instance as any).$on('query', (e: any) => {
+        logger.debug('Database Query', {
+          query: e.query,
+          params: e.params,
+          duration: `${e.duration}ms`,
         });
-      }
+      });
 
       (DatabaseConnection.instance as any).$on('error', (e: any) => {
         logger.error('Database Error', { error: e });
@@ -49,7 +47,6 @@ class DatabaseConnection {
         logger.warn('Database Warning', { message: e.message });
       });
 
-      // Ensure connection is established
       DatabaseConnection.instance.$connect().catch((error) => {
         logger.error('Failed to connect to database', { error: error.message });
       });
@@ -65,6 +62,5 @@ class DatabaseConnection {
   }
 }
 
-// Export prisma instance only when not in test environment
 export const prisma = process.env['NODE_ENV'] === 'test' ? null as any : DatabaseConnection.getInstance();
 export { DatabaseConnection };

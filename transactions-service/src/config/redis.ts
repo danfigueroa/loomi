@@ -11,7 +11,7 @@ class RedisConnection {
       RedisConnection.instance = new Redis(redisUrl, {
         enableReadyCheck: false,
         maxRetriesPerRequest: 3,
-        lazyConnect: false, // Changed to false to establish connection immediately
+        lazyConnect: false,
       });
 
       RedisConnection.instance.on('connect', () => {
@@ -32,7 +32,7 @@ class RedisConnection {
 
   public static async disconnect(): Promise<void> {
     if (RedisConnection.instance) {
-      await RedisConnection.instance.quit();
+      await RedisConnection.instance.disconnect();
     }
   }
 }

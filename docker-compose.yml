@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - loomi-network
     healthcheck:
@@ -35,6 +36,26 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: loomi-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq123
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - loomi-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   customers-service:
     build:
       context: ./customers-service
@@ -46,12 +67,15 @@ services:
       DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/customers_db
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      RABBITMQ_URL: amqp://rabbitmq:rabbitmq123@rabbitmq:5672
     ports:
       - "3001:3001"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - loomi-network
@@ -77,12 +101,15 @@ services:
       CUSTOMERS_SERVICE_URL: http://customers-service:3001
       HTTP_TIMEOUT: 5000
       HTTP_MAX_RETRIES: 3
+      RABBITMQ_URL: amqp://rabbitmq:rabbitmq123@rabbitmq:5672
     ports:
       - "3002:3002"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       customers-service:
         condition: service_healthy
@@ -117,6 +144,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
 
 networks:
   loomi-network:

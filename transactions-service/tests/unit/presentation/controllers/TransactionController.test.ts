@@ -214,7 +214,7 @@ describe('TransactionController', () => {
 
       getTransactionsByUserSchema.validate.mockReturnValue({ value: { userId } });
       paginationSchema.validate.mockReturnValue({ value: { page, limit } });
-      mockTransactionService.getTransactionsByUserId.mockResolvedValue(transactions);
+      mockTransactionService.getTransactionsByUserId.mockResolvedValue({ transactions, total: 2 });
 
       mockRequest.params = { userId };
       mockRequest.query = { page: '1', limit: '10' };
@@ -238,7 +238,7 @@ describe('TransactionController', () => {
         pagination: {
           page,
           limit,
-          total: transactions.length
+          total: 2
         }
       });
     });

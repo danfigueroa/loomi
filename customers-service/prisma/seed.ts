@@ -5,11 +5,9 @@ const prisma = new PrismaClient();
 async function main(): Promise<void> {
   console.log('🌱 Iniciando seed do banco de dados...');
 
-  // Limpar dados existentes
   await prisma.bankingDetails.deleteMany();
   await prisma.user.deleteMany();
 
-  // Criar usuários de exemplo
   const users = await Promise.all([
     prisma.user.create({
       data: {

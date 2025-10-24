@@ -8,16 +8,14 @@ import { errorHandler } from './middlewares/errorHandler';
 import { requestLogger } from './middlewares/requestLogger';
 import { correlationId } from './middlewares/correlationId';
 import { healthController } from './controllers/healthController';
-import { userRoutes } from './routes/userRoutes';
 import { swaggerSpec } from './config/swagger';
 
 const app = express();
 
-// Disable rate limiting in test environment
 const limiter = process.env['NODE_ENV'] === 'test' 
   ? rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: 10000, // Very high limit for tests
+      max: 10000,
       message: 'Too many requests from this IP',
       standardHeaders: true,
       legacyHeaders: false,
@@ -42,7 +40,7 @@ app.use(requestLogger);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', healthController.check);
-app.use('/api/users', userRoutes);
+// User routes serão configuradas no index.ts com injeção de dependências
 
 app.use(errorHandler);
 

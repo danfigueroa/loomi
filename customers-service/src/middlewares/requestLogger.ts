@@ -5,7 +5,6 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
   const start = Date.now();
   const correlationId = (req as any).correlationId;
 
-  // Log request
   logger.info('Incoming request', {
     method: req.method,
     url: req.url,
@@ -13,7 +12,6 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
     correlationId,
   });
 
-  // Override res.end to log response
   const originalEnd = res.end;
   res.end = function(chunk?: any, encoding?: any): Response {
     const duration = Date.now() - start;

@@ -47,6 +47,17 @@ export class TransactionRepository implements ITransactionRepository {
     return transactions.map(this.mapToEntity);
   }
 
+  async countByUserId(userId: string): Promise<number> {
+    return await this.prisma.transaction.count({
+      where: {
+        OR: [
+          { fromUserId: userId },
+          { toUserId: userId },
+        ],
+      },
+    });
+  }
+
   async updateStatus(id: string, status: string, processedAt?: Date): Promise<Transaction> {
     const transaction = await this.prisma.transaction.update({
       where: { id },

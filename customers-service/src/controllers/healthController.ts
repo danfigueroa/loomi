@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { DatabaseConnection } from '../config/database';
 import { RedisConnection } from '../config/redis';
 import { logger } from '../config/logger';
+import { IMessageBroker } from '../domain/interfaces/IMessageBroker';
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy';
@@ -12,22 +13,31 @@ interface HealthStatus {
   checks: {
     database: 'healthy' | 'unhealthy';
     redis: 'healthy' | 'unhealthy';
+    rabbitmq: 'healthy' | 'unhealthy';
   };
 }
 
 class HealthController {
+  private messageBroker?: IMessageBroker;
+
+  setMessageBroker(messageBroker: IMessageBroker): void {
+    this.messageBroker = messageBroker;
+  }
+
   async check(_req: Request, res: Response): Promise<void> {
     const startTime = Date.now();
     
     try {
-      const [databaseStatus, redisStatus] = await Promise.allSettled([
+      const [databaseStatus, redisStatus, rabbitmqStatus] = await Promise.allSettled([
         DatabaseConnection.getInstance().$queryRaw`SELECT 1`,
-        RedisConnection.getInstance().ping()
+        RedisConnection.getInstance().ping(),
+        this.messageBroker?.isConnected() ? Promise.resolve(true) : Promise.reject(new Error('RabbitMQ not initialized'))
       ]);
 
       const dbHealthy = databaseStatus.status === 'fulfilled';
       const redisHealthy = redisStatus.status === 'fulfilled';
-      const isHealthy = dbHealthy && redisHealthy;
+      const rabbitmqHealthy = rabbitmqStatus.status === 'fulfilled';
+      const isHealthy = dbHealthy && redisHealthy && rabbitmqHealthy;
 
       const healthStatus: HealthStatus = {
         status: isHealthy ? 'healthy' : 'unhealthy',
@@ -37,7 +47,8 @@ class HealthController {
         uptime: process.uptime(),
         checks: {
           database: dbHealthy ? 'healthy' : 'unhealthy',
-          redis: redisHealthy ? 'healthy' : 'unhealthy'
+          redis: redisHealthy ? 'healthy' : 'unhealthy',
+          rabbitmq: rabbitmqHealthy ? 'healthy' : 'unhealthy'
         }
       };
 
@@ -61,7 +72,8 @@ class HealthController {
         uptime: process.uptime(),
         checks: {
           database: 'unhealthy',
-          redis: 'unhealthy'
+          redis: 'unhealthy',
+          rabbitmq: 'unhealthy'
         }
       };
 
