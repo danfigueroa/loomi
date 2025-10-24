@@ -2,8 +2,8 @@ import axios from 'axios';
 import jwt from 'jsonwebtoken';
 
 const NGINX_BASE_URL = 'http://localhost:8080';
-const CUSTOMERS_SERVICE_URL = 'http://localhost:3001';
-const TRANSACTIONS_SERVICE_URL = 'http://localhost:3002';
+const CUSTOMERS_SERVICE_URL = 'http://localhost:3011';
+const TRANSACTIONS_SERVICE_URL = 'http://localhost:3012';
 const JWT_SECRET = 'test-jwt-secret-key-for-e2e-tests';
 
 interface User {

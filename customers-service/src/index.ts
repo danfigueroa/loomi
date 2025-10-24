@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { app } from './app';
-import { logger } from '@/config/logger';
-import { DatabaseConnection } from '@/config/database';
-import { RedisConnection } from '@/config/redis';
+import { logger } from './config/logger';
+import { DatabaseConnection } from './config/database';
+import { RedisConnection } from './config/redis';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env['PORT'] || 3001;
 
 const startServer = async (): Promise<void> => {
   try {
@@ -16,7 +16,7 @@ const startServer = async (): Promise<void> => {
 
     app.listen(PORT, () => {
       logger.info(`🚀 Customers service running on port ${PORT}`);
-      logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`📊 Environment: ${process.env['NODE_ENV'] || 'development'}`);
       logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {

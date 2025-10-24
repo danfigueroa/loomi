@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { healthController } from '@/controllers/healthController';
-import { DatabaseConnection } from '@/config/database';
-import { RedisConnection } from '@/config/redis';
-import { logger } from '@/config/logger';
+import { healthController } from '../../../src/controllers/healthController';
+import { DatabaseConnection } from '../../../src/config/database';
+import { RedisConnection } from '../../../src/config/redis';
+import { logger } from '../../../src/config/logger';
 
-jest.mock('@/config/database');
-jest.mock('@/config/redis');
-jest.mock('@/config/logger');
+jest.mock('../../../src/config/database');
+jest.mock('../../../src/config/redis');
+jest.mock('../../../src/config/logger');
 
 describe('HealthController', () => {
   let mockRequest: Partial<Request>;

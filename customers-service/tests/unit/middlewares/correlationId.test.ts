@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { correlationId, RequestWithCorrelationId } from '@/middlewares/correlationId';
+import { Response, NextFunction } from 'express';
+import { correlationId, RequestWithCorrelationId } from '../../../src/middlewares/correlationId';
 import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('uuid');

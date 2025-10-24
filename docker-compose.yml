@@ -5,7 +5,7 @@ services:
     image: postgres:15-alpine
     container_name: loomi-postgres
     environment:
-      POSTGRES_DB: loomi_db
+      POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
     ports:
@@ -43,7 +43,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/loomi_db
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/customers_db
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
     ports:
@@ -69,8 +69,9 @@ services:
     container_name: loomi-transactions-service
     environment:
       NODE_ENV: production
+      LOG_LEVEL: debug
       PORT: 3002
-      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/loomi_db
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/transactions_db
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       CUSTOMERS_SERVICE_URL: http://customers-service:3001

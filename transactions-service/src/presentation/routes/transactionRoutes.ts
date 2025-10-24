@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { TransactionController } from '@/presentation/controllers/TransactionController';
-import { TransactionService } from '@/application/services/TransactionService';
-import { TransactionRepository } from '@/infrastructure/repositories/TransactionRepository';
-import { CustomerService } from '@/infrastructure/services/CustomerService';
-import { prisma } from '@/config/database';
-import { authenticateToken } from '@/shared/middlewares/auth';
-import { createRateLimiter } from '@/shared/middlewares/rateLimiter';
+import { TransactionController } from '../controllers/TransactionController';
+import { TransactionService } from '../../application/services/TransactionService';
+import { TransactionRepository } from '../../infrastructure/repositories/TransactionRepository';
+import { CustomerService } from '../../infrastructure/services/CustomerService';
+import { prisma } from '../../config/database';
+import { authenticateToken } from '../../shared/middlewares/auth';
+import { createRateLimiter } from '../../shared/middlewares/rateLimiter';
 
 const router = Router();
 
@@ -14,13 +14,16 @@ const customerService = new CustomerService();
 const transactionService = new TransactionService(transactionRepository, customerService);
 const transactionController = new TransactionController(transactionService);
 
-const transactionRateLimit = createRateLimiter(60000, 10);
+// Disable rate limiting in test environment
+const transactionRateLimit = process.env['NODE_ENV'] === 'test' 
+  ? createRateLimiter(60000, 10000) // Very high limit for tests
+  : createRateLimiter(60000, 10);
 
 router.post(
-  '/transactions',
+  '/',
   transactionRateLimit,
   authenticateToken,
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       await transactionController.createTransaction(req, res);
     } catch (error) {
@@ -30,9 +33,9 @@ router.post(
 );
 
 router.get(
-  '/transactions/:id',
+  '/:id',
   authenticateToken,
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       await transactionController.getTransactionById(req, res);
     } catch (error) {
@@ -42,9 +45,9 @@ router.get(
 );
 
 router.get(
-  '/transactions/user/:userId',
+  '/user/:userId',
   authenticateToken,
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       await transactionController.getTransactionsByUserId(req, res);
     } catch (error) {

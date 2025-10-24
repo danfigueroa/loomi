@@ -27,8 +27,8 @@ class DatabaseConnection {
         ],
       });
 
-      if (process.env.NODE_ENV === 'development') {
-        DatabaseConnection.instance.$on('query', e => {
+      if (process.env['NODE_ENV'] === 'development') {
+        (DatabaseConnection.instance as any).$on('query', (e: any) => {
           logger.debug('Database Query', {
             query: e.query,
             params: e.params,
@@ -37,16 +37,21 @@ class DatabaseConnection {
         });
       }
 
-      DatabaseConnection.instance.$on('error', e => {
+      (DatabaseConnection.instance as any).$on('error', (e: any) => {
         logger.error('Database Error', { error: e });
       });
 
-      DatabaseConnection.instance.$on('info', e => {
+      (DatabaseConnection.instance as any).$on('info', (e: any) => {
         logger.info('Database Info', { message: e.message });
       });
 
-      DatabaseConnection.instance.$on('warn', e => {
+      (DatabaseConnection.instance as any).$on('warn', (e: any) => {
         logger.warn('Database Warning', { message: e.message });
+      });
+
+      // Ensure connection is established
+      DatabaseConnection.instance.$connect().catch((error) => {
+        logger.error('Failed to connect to database', { error: error.message });
       });
     }
 
@@ -60,5 +65,6 @@ class DatabaseConnection {
   }
 }
 
-export const prisma = DatabaseConnection.getInstance();
+// Export prisma instance only when not in test environment
+export const prisma = process.env['NODE_ENV'] === 'test' ? null as any : DatabaseConnection.getInstance();
 export { DatabaseConnection };

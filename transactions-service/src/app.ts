@@ -3,23 +3,32 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
-import { logger } from '@/config/logger';
-import { errorHandler } from '@/middlewares/errorHandler';
-import { requestLogger } from '@/middlewares/requestLogger';
-import { correlationId } from '@/middlewares/correlationId';
-import { healthController } from '@/controllers/healthController';
-import { transactionRoutes } from '@/routes/transactionRoutes';
-import { swaggerSpec } from '@/config/swagger';
+import { errorHandler } from './shared/middlewares/errorHandler';
+import { requestLogger } from './shared/middlewares/requestLogger';
+import { correlationId } from './middlewares/correlationId';
+import { healthController } from './controllers/healthController';
+import { transactionRoutes } from './presentation/routes/transactionRoutes';
+import { swaggerSpec } from './config/swagger';
+import { logger } from './config/logger';
 
 const app = express();
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Disable rate limiting in test environment
+const limiter = process.env['NODE_ENV'] === 'test' 
+  ? rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 10000, // Very high limit for tests
+      message: 'Too many requests from this IP',
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
+  : rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+      message: 'Too many requests from this IP',
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
 
 app.use(helmet());
 app.use(cors());
@@ -27,12 +36,49 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(correlationId);
-app.use(requestLogger);
+app.use(correlationId as any);
+app.use(requestLogger as any);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.get('/health', healthController.check);
+app.get('/health', async (req, res) => {
+  try {
+    logger.info('Health endpoint called directly', {
+      method: req.method,
+      url: req.url,
+      userAgent: req.get('User-Agent')
+    });
+    
+    // Check if response has already been sent
+    if (res.headersSent) {
+      logger.warn('Response already sent, skipping health check');
+      return;
+    }
+    
+    await healthController.check(req, res);
+  } catch (error) {
+    logger.error('Health endpoint error:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Only send response if not already sent
+    if (!res.headersSent) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        service: 'transactions-service',
+        version: '1.0.0',
+        uptime: process.uptime(),
+        checks: {
+          database: 'unhealthy',
+          redis: 'unhealthy',
+          customersService: 'unhealthy'
+        }
+      });
+    }
+  }
+});
 app.use('/api/transactions', transactionRoutes);
 
 app.use(errorHandler);

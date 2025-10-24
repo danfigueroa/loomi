@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
-import { ITransactionService } from '@/domain/interfaces/ITransactionService';
-import { AppError } from '@/shared/errors/AppError';
-import { RequestWithCorrelationId } from '@/middlewares/correlationId';
+import { Response } from 'express';
+import { ITransactionService } from '../../domain/interfaces/ITransactionService';
+import { AppError } from '../../shared/errors/AppError';
+import { RequestWithCorrelationId } from '../../middlewares/correlationId';
 import { 
   createTransactionSchema, 
   getTransactionByIdSchema, 
   getTransactionsByUserSchema,
   paginationSchema 
-} from '@/shared/validation/TransactionValidation';
+} from '../../shared/validation/TransactionValidation';
 
 export class TransactionController {
   constructor(private transactionService: ITransactionService) {}
@@ -17,10 +17,10 @@ export class TransactionController {
       const { error, value } = createTransactionSchema.validate(req.body);
       
       if (error) {
-        throw new AppError(error.details[0].message, 400);
+        throw new AppError(error.details[0]?.message || 'Validation error', 400);
       }
 
-      const transaction = await this.transactionService.createTransaction(value, req.correlationId);
+      const transaction = await this.transactionService.createTransaction(value);
       
       res.status(201).json({
         success: true,
@@ -32,12 +32,12 @@ export class TransactionController {
     }
   }
 
-  async getTransactionById(req: Request, res: Response): Promise<void> {
+  async getTransactionById(req: RequestWithCorrelationId, res: Response): Promise<void> {
     try {
       const { error, value } = getTransactionByIdSchema.validate(req.params);
       
       if (error) {
-        throw new AppError(error.details[0].message, 400);
+        throw new AppError(error.details[0]?.message || 'Validation error', 400);
       }
 
       const transaction = await this.transactionService.getTransactionById(value.id);
@@ -57,11 +57,11 @@ export class TransactionController {
       const queryValidation = paginationSchema.validate(req.query);
       
       if (paramsValidation.error) {
-        throw new AppError(paramsValidation.error.details[0].message, 400);
+        throw new AppError(paramsValidation.error.details[0]?.message || 'Validation error', 400);
       }
       
       if (queryValidation.error) {
-        throw new AppError(queryValidation.error.details[0].message, 400);
+        throw new AppError(queryValidation.error.details[0]?.message || 'Validation error', 400);
       }
 
       const { userId } = paramsValidation.value;
@@ -70,8 +70,7 @@ export class TransactionController {
       const transactions = await this.transactionService.getTransactionsByUserId(
         userId, 
         page, 
-        limit,
-        req.correlationId
+        limit
       );
       
       res.status(200).json({

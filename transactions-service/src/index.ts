@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { app } from './app';
-import { logger } from '@/config/logger';
-import { DatabaseConnection } from '@/config/database';
-import { RedisConnection } from '@/config/redis';
+import { logger } from './config/logger';
+import { DatabaseConnection } from './config/database';
+import { RedisConnection } from './config/redis';
 
-const PORT = process.env.PORT || 3002;
+const port = process.env['PORT'] || 3002;
 
 const startServer = async (): Promise<void> => {
   try {
@@ -14,10 +14,10 @@ const startServer = async (): Promise<void> => {
     await RedisConnection.getInstance().ping();
     logger.info('Redis connected successfully');
 
-    app.listen(PORT, () => {
-      logger.info(`🚀 Transactions service running on port ${PORT}`);
-      logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+    app.listen(port, () => {
+      logger.info(`🚀 Transactions service running on port ${port}`);
+      logger.info(`📊 Environment: ${process.env['NODE_ENV'] || 'development'}`);
+      logger.info(`🔗 Health check: http://localhost:${port}/health`);
     });
   } catch (error) {
     logger.error('Failed to start server', { error });

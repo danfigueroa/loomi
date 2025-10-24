@@ -1,4 +1,4 @@
-import { Transaction } from '@/domain/entities/Transaction';
+import { Transaction } from '../entities/Transaction';
 
 export interface CreateTransactionData {
   fromUserId: string;

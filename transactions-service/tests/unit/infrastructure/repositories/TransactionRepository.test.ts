@@ -1,7 +1,6 @@
-import { TransactionRepository } from '@/infrastructure/repositories/TransactionRepository';
-import { PrismaClient } from '@prisma/client';
-import { Transaction, TransactionStatus, TransactionType } from '@/domain/entities/Transaction';
-import { CreateTransactionData } from '@/domain/interfaces/ITransactionRepository';
+import { TransactionRepository } from '../../../../src/infrastructure/repositories/TransactionRepository';
+import { TransactionStatus, TransactionType } from '../../../../src/domain/entities/Transaction';
+import { CreateTransactionData } from '../../../../src/domain/interfaces/ITransactionRepository';
 
 const mockPrisma = {
   transaction: {
@@ -10,7 +9,7 @@ const mockPrisma = {
     findMany: jest.fn(),
     update: jest.fn()
   }
-} as unknown as jest.Mocked<PrismaClient>;
+} as any;
 
 describe('TransactionRepository', () => {
   let transactionRepository: TransactionRepository;
@@ -179,7 +178,7 @@ describe('TransactionRepository', () => {
     it('should return transactions with custom pagination', async () => {
       mockPrisma.transaction.findMany.mockResolvedValue([mockTransactions[0]]);
 
-      const result = await transactionRepository.findByUserId('user1', 2, 5);
+      await transactionRepository.findByUserId('user1', 2, 5);
 
       expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith({
         where: {
@@ -247,7 +246,7 @@ describe('TransactionRepository', () => {
         where: { id: 'transaction-id' },
         data: {
           status: TransactionStatus.CANCELLED,
-          processedAt: undefined
+          processedAt: null
         }
       });
     });
@@ -276,7 +275,7 @@ describe('TransactionRepository', () => {
     it('should return transactions with custom pagination', async () => {
       mockPrisma.transaction.findMany.mockResolvedValue([mockTransactions[0]]);
 
-      const result = await transactionRepository.findAll(3, 5);
+      await transactionRepository.findAll(3, 5);
 
       expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith({
         orderBy: { createdAt: 'desc' },

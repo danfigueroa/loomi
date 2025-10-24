@@ -1,8 +1,8 @@
-import { Transaction, TransactionStatus } from '@/domain/entities/Transaction';
-import { ITransactionService, CreateTransactionRequest } from '@/domain/interfaces/ITransactionService';
-import { ITransactionRepository } from '@/domain/interfaces/ITransactionRepository';
-import { ICustomerService } from '@/domain/interfaces/ICustomerService';
-import { AppError } from '@/shared/errors/AppError';
+import { Transaction, TransactionStatus } from '../../domain/entities/Transaction';
+import { ITransactionService, CreateTransactionRequest } from '../../domain/interfaces/ITransactionService';
+import { ITransactionRepository } from '../../domain/interfaces/ITransactionRepository';
+import { ICustomerService } from '../../domain/interfaces/ICustomerService';
+import { AppError } from '../../shared/errors/AppError';
 import { v4 as uuidv4 } from 'uuid';
 
 export class TransactionService implements ITransactionService {
@@ -11,7 +11,7 @@ export class TransactionService implements ITransactionService {
     private customerService: ICustomerService
   ) {}
 
-  async createTransaction(data: CreateTransactionRequest, correlationId?: string): Promise<Transaction> {
+  async createTransaction(data: CreateTransactionRequest): Promise<Transaction> {
     if (data.amount <= 0) {
       throw new AppError('Amount must be greater than zero', 400);
     }
@@ -20,8 +20,8 @@ export class TransactionService implements ITransactionService {
       throw new AppError('Cannot transfer to the same user', 400);
     }
 
-    await this.customerService.validateUser(data.fromUserId, correlationId);
-    await this.customerService.validateUser(data.toUserId, correlationId);
+    await this.customerService.validateUser(data.fromUserId);
+    await this.customerService.validateUser(data.toUserId);
 
     const transactionData = {
       ...data,
@@ -41,8 +41,8 @@ export class TransactionService implements ITransactionService {
     return transaction;
   }
 
-  async getTransactionsByUserId(userId: string, page = 1, limit = 10, correlationId?: string): Promise<Transaction[]> {
-    await this.customerService.validateUser(userId, correlationId);
+  async getTransactionsByUserId(userId: string, page = 1, limit = 10): Promise<Transaction[]> {
+    await this.customerService.validateUser(userId);
     
     return await this.transactionRepository.findByUserId(userId, page, limit);
   }

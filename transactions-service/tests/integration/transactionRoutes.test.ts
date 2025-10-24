@@ -1,12 +1,14 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
-import { app } from '@/app';
-import { prisma } from '@/config/database';
+import { app } from '../../src/app';
+import { DatabaseConnection } from '../../src/config/database';
+
+const prisma = DatabaseConnection.getInstance();
 
 const generateToken = (userId: string, email: string): string => {
   return jwt.sign(
     { userId, email },
-    process.env.JWT_SECRET || 'test-jwt-secret',
+    process.env['JWT_SECRET'] || 'test-secret',
     { expiresIn: '1h' }
   );
 };
@@ -17,7 +19,12 @@ describe('Transaction Routes', () => {
   const token = generateToken(testUserId, testUserEmail);
 
   beforeEach(async () => {
-    await prisma.transaction.deleteMany();
+    // Clean up test data
+    try {
+      await prisma.transaction.deleteMany();
+    } catch (error) {
+      console.warn('Failed to clean up test data:', error);
+    }
   });
 
   describe('POST /api/transactions', () => {
@@ -161,26 +168,28 @@ describe('Transaction Routes', () => {
 
   describe('GET /api/transactions/user/:userId', () => {
     beforeEach(async () => {
-      await prisma.transaction.createMany({
-        data: [
-          {
+      await Promise.all([
+        prisma.transaction.create({
+          data: {
             fromUserId: testUserId,
             toUserId: '123e4567-e89b-12d3-a456-426614174001',
             amount: 100.50,
             description: 'Transaction 1',
             status: 'COMPLETED',
             type: 'TRANSFER',
-          },
-          {
+          }
+        }),
+        prisma.transaction.create({
+          data: {
             fromUserId: '123e4567-e89b-12d3-a456-426614174001',
             toUserId: testUserId,
             amount: 50.25,
             description: 'Transaction 2',
             status: 'PENDING',
             type: 'TRANSFER',
-          },
-        ],
-      });
+          }
+        })
+      ]);
     });
 
     it('should return user transactions', async () => {

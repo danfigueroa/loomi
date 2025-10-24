@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AppError } from '@/shared/errors/AppError';
+import { AppError } from '../errors/AppError';
 
 interface JwtPayload {
   userId: string;
@@ -19,7 +19,7 @@ declare global {
 
 export const authenticateToken = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
   const authHeader = req.headers.authorization;
@@ -30,7 +30,7 @@ export const authenticateToken = (
   }
 
   try {
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret = process.env['JWT_SECRET'];
     if (!jwtSecret) {
       throw new AppError('JWT secret not configured', 500);
     }

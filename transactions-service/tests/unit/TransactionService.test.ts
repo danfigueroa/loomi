@@ -1,8 +1,8 @@
-import { TransactionService } from '@/application/services/TransactionService';
-import { ITransactionRepository } from '@/domain/interfaces/ITransactionRepository';
-import { ICustomerService } from '@/domain/interfaces/ICustomerService';
-import { Transaction, TransactionStatus, TransactionType } from '@/domain/entities/Transaction';
-import { AppError } from '@/shared/errors/AppError';
+import { TransactionService } from '../../src/application/services/TransactionService';
+import { ITransactionRepository } from '../../src/domain/interfaces/ITransactionRepository';
+import { ICustomerService } from '../../src/domain/interfaces/ICustomerService';
+import { Transaction, TransactionStatus, TransactionType } from '../../src/domain/entities/Transaction';
+import { AppError } from '../../src/shared/errors/AppError';
 
 const mockTransactionRepository: jest.Mocked<ITransactionRepository> = {
   create: jest.fn(),

@@ -1,7 +1,7 @@
-import { ICustomerService, Customer } from '@/domain/interfaces/ICustomerService';
-import { AppError } from '@/shared/errors/AppError';
-import { CustomersServiceClient } from '@/infrastructure/http/CustomersServiceClient';
-import { logger } from '@/config/logger';
+import { ICustomerService, Customer } from '../../domain/interfaces/ICustomerService';
+import { AppError } from '../../shared/errors/AppError';
+import { CustomersServiceClient } from '../http/CustomersServiceClient';
+import { logger } from '../../config/logger';
 
 export class CustomerService implements ICustomerService {
   private customersClient: CustomersServiceClient;

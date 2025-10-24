@@ -6,19 +6,19 @@ class RedisConnection {
 
   public static getInstance(): Redis {
     if (!RedisConnection.instance) {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
       
       RedisConnection.instance = new Redis(redisUrl, {
-        retryDelayOnFailover: 100,
+        enableReadyCheck: false,
         maxRetriesPerRequest: 3,
-        lazyConnect: true,
+        lazyConnect: false, // Changed to false to establish connection immediately
       });
 
       RedisConnection.instance.on('connect', () => {
         logger.info('Redis connected successfully');
       });
 
-      RedisConnection.instance.on('error', (error) => {
+      RedisConnection.instance.on('error', (error: any) => {
         logger.error('Redis connection error', { error: error.message });
       });
 

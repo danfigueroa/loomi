@@ -1,10 +1,11 @@
-import { Request, Response } from 'express';
-import { TransactionController } from '@/presentation/controllers/TransactionController';
-import { ITransactionService } from '@/domain/interfaces/ITransactionService';
-import { AppError } from '@/shared/errors/AppError';
-import { RequestWithCorrelationId } from '@/middlewares/correlationId';
+import { Response } from 'express';
+import { TransactionController } from '../../../../src/presentation/controllers/TransactionController';
+import { ITransactionService } from '../../../../src/domain/interfaces/ITransactionService';
+import { AppError } from '../../../../src/shared/errors/AppError';
+import { RequestWithCorrelationId } from '../../../../src/middlewares/correlationId';
+import { TransactionStatus, TransactionType } from '../../../../src/domain/entities/Transaction';
 
-jest.mock('@/shared/validation/TransactionValidation', () => ({
+jest.mock('../../../../src/shared/validation/TransactionValidation', () => ({
   createTransactionSchema: {
     validate: jest.fn()
   },
@@ -31,7 +32,9 @@ describe('TransactionController', () => {
     mockTransactionService = {
       createTransaction: jest.fn(),
       getTransactionById: jest.fn(),
-      getTransactionsByUserId: jest.fn()
+      getTransactionsByUserId: jest.fn(),
+      processTransaction: jest.fn(),
+      cancelTransaction: jest.fn()
     };
 
     mockJson = jest.fn();
@@ -54,7 +57,7 @@ describe('TransactionController', () => {
   });
 
   describe('createTransaction', () => {
-    const { createTransactionSchema } = require('@/shared/validation/TransactionValidation');
+    const { createTransactionSchema } = require('../../../../src/shared/validation/TransactionValidation');
 
     it('should create transaction successfully', async () => {
       const transactionData = {
@@ -67,8 +70,10 @@ describe('TransactionController', () => {
       const createdTransaction = {
         id: 'transaction-id',
         ...transactionData,
-        status: 'completed',
-        createdAt: new Date()
+        status: TransactionStatus.COMPLETED,
+        type: TransactionType.TRANSFER,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       createTransactionSchema.validate.mockReturnValue({ value: transactionData });
@@ -83,8 +88,7 @@ describe('TransactionController', () => {
 
       expect(createTransactionSchema.validate).toHaveBeenCalledWith(transactionData);
       expect(mockTransactionService.createTransaction).toHaveBeenCalledWith(
-        transactionData,
-        'test-correlation-id'
+        transactionData
       );
       expect(mockStatus).toHaveBeenCalledWith(201);
       expect(mockJson).toHaveBeenCalledWith({
@@ -128,14 +132,19 @@ describe('TransactionController', () => {
   });
 
   describe('getTransactionById', () => {
-    const { getTransactionByIdSchema } = require('@/shared/validation/TransactionValidation');
+    const { getTransactionByIdSchema } = require('../../../../src/shared/validation/TransactionValidation');
 
     it('should get transaction by id successfully', async () => {
       const transactionId = 'transaction-id';
       const transaction = {
         id: transactionId,
+        fromUserId: 'user1',
+        toUserId: 'user2',
         amount: 100,
-        status: 'completed'
+        status: TransactionStatus.COMPLETED,
+        type: TransactionType.TRANSFER,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
       getTransactionByIdSchema.validate.mockReturnValue({ value: { id: transactionId } });
@@ -144,7 +153,7 @@ describe('TransactionController', () => {
       mockRequest.params = { id: transactionId };
 
       await transactionController.getTransactionById(
-        mockRequest as Request,
+        mockRequest as RequestWithCorrelationId,
         mockResponse as Response
       );
 
@@ -166,7 +175,7 @@ describe('TransactionController', () => {
 
       await expect(
         transactionController.getTransactionById(
-          mockRequest as Request,
+          mockRequest as RequestWithCorrelationId,
           mockResponse as Response
         )
       ).rejects.toThrow(new AppError('Invalid transaction ID', 400));
@@ -174,15 +183,33 @@ describe('TransactionController', () => {
   });
 
   describe('getTransactionsByUserId', () => {
-    const { getTransactionsByUserSchema, paginationSchema } = require('@/shared/validation/TransactionValidation');
+    const { getTransactionsByUserSchema, paginationSchema } = require('../../../../src/shared/validation/TransactionValidation');
 
     it('should get transactions by user id successfully', async () => {
       const userId = 'user-id';
       const page = 1;
       const limit = 10;
       const transactions = [
-        { id: 'tx1', amount: 100 },
-        { id: 'tx2', amount: 200 }
+        { 
+          id: 'tx1', 
+          fromUserId: 'user1',
+          toUserId: 'user2',
+          amount: 100,
+          status: TransactionStatus.PENDING,
+           type: TransactionType.TRANSFER,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        { 
+          id: 'tx2', 
+          fromUserId: 'user1',
+          toUserId: 'user3',
+          amount: 200,
+          status: TransactionStatus.COMPLETED,
+           type: TransactionType.TRANSFER,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
       ];
 
       getTransactionsByUserSchema.validate.mockReturnValue({ value: { userId } });
@@ -202,8 +229,7 @@ describe('TransactionController', () => {
       expect(mockTransactionService.getTransactionsByUserId).toHaveBeenCalledWith(
         userId,
         page,
-        limit,
-        'test-correlation-id'
+        limit
       );
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({

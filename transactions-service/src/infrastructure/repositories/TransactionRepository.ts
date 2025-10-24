@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { Transaction, TransactionStatus, TransactionType } from '@/domain/entities/Transaction';
-import { ITransactionRepository, CreateTransactionData } from '@/domain/interfaces/ITransactionRepository';
+import { Transaction, TransactionStatus, TransactionType } from '../../domain/entities/Transaction';
+import { ITransactionRepository, CreateTransactionData } from '../../domain/interfaces/ITransactionRepository';
 
 export class TransactionRepository implements ITransactionRepository {
   constructor(private prisma: PrismaClient) {}
@@ -11,9 +11,9 @@ export class TransactionRepository implements ITransactionRepository {
         fromUserId: data.fromUserId,
         toUserId: data.toUserId,
         amount: data.amount,
-        description: data.description,
+        description: data.description || null,
         type: (data.type as TransactionType) || TransactionType.TRANSFER,
-        externalReference: data.externalReference,
+        externalReference: data.externalReference || null,
         status: TransactionStatus.PENDING,
       },
     });
@@ -52,7 +52,7 @@ export class TransactionRepository implements ITransactionRepository {
       where: { id },
       data: {
         status: status as TransactionStatus,
-        processedAt,
+        processedAt: processedAt || null,
       },
     });
 

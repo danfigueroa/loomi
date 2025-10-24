@@ -1,8 +1,8 @@
-import { TransactionService } from '@/application/services/TransactionService';
-import { ITransactionRepository } from '@/domain/interfaces/ITransactionRepository';
-import { ICustomerService } from '@/domain/interfaces/ICustomerService';
-import { Transaction, TransactionStatus } from '@/domain/entities/Transaction';
-import { AppError } from '@/shared/errors/AppError';
+import { TransactionService } from '../../../../src/application/services/TransactionService';
+import { ITransactionRepository } from '../../../../src/domain/interfaces/ITransactionRepository';
+import { ICustomerService } from '../../../../src/domain/interfaces/ICustomerService';
+import { Transaction, TransactionStatus, TransactionType } from '../../../../src/domain/entities/Transaction';
+import { AppError } from '../../../../src/shared/errors/AppError';
 import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('uuid');
@@ -17,11 +17,13 @@ describe('TransactionService', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findByUserId: jest.fn(),
-      updateStatus: jest.fn()
+      updateStatus: jest.fn(),
+      findAll: jest.fn()
     };
 
     mockCustomerService = {
-      validateUser: jest.fn()
+      validateUser: jest.fn(),
+      getUserById: jest.fn()
     };
 
     transactionService = new TransactionService(
@@ -47,17 +49,21 @@ describe('TransactionService', () => {
         ...validTransactionData,
         externalReference: mockUuid,
         status: TransactionStatus.PENDING,
-        createdAt: new Date()
+        type: TransactionType.TRANSFER,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
+      const mockCustomer = { id: 'user1', name: 'Test User', email: 'test@example.com' };
+      
       (uuidv4 as jest.Mock).mockReturnValue(mockUuid);
-      mockCustomerService.validateUser.mockResolvedValue(undefined);
+      mockCustomerService.validateUser.mockResolvedValue(mockCustomer);
       mockTransactionRepository.create.mockResolvedValue(expectedTransaction);
 
-      const result = await transactionService.createTransaction(validTransactionData, 'correlation-id');
+      const result = await transactionService.createTransaction(validTransactionData);
 
-      expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user1', 'correlation-id');
-      expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user2', 'correlation-id');
+      expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user1');
+      expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user2');
       expect(mockTransactionRepository.create).toHaveBeenCalledWith({
         ...validTransactionData,
         externalReference: mockUuid
@@ -104,9 +110,10 @@ describe('TransactionService', () => {
     });
 
     it('should throw error when toUser validation fails', async () => {
+      const mockCustomer = { id: 'user1', name: 'Test User', email: 'test@example.com' };
       const validationError = new AppError('User not found', 404);
       mockCustomerService.validateUser
-        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce(mockCustomer)
         .mockRejectedValueOnce(validationError);
 
       await expect(
@@ -149,23 +156,26 @@ describe('TransactionService', () => {
         { id: 'tx2', amount: 200 }
       ] as Transaction[];
 
-      mockCustomerService.validateUser.mockResolvedValue(undefined);
+      const mockCustomer = { id: 'user-id', name: 'Test User', email: 'test@example.com' };
+      
+      mockCustomerService.validateUser.mockResolvedValue(mockCustomer);
       mockTransactionRepository.findByUserId.mockResolvedValue(mockTransactions);
 
       const result = await transactionService.getTransactionsByUserId(
         'user-id',
         1,
-        10,
-        'correlation-id'
+        10
       );
 
-      expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user-id', 'correlation-id');
+      expect(mockCustomerService.validateUser).toHaveBeenCalledWith('user-id');
       expect(mockTransactionRepository.findByUserId).toHaveBeenCalledWith('user-id', 1, 10);
       expect(result).toEqual(mockTransactions);
     });
 
     it('should use default pagination values', async () => {
-      mockCustomerService.validateUser.mockResolvedValue(undefined);
+      const mockCustomer = { id: 'user-id', name: 'Test User', email: 'test@example.com' };
+      
+      mockCustomerService.validateUser.mockResolvedValue(mockCustomer);
       mockTransactionRepository.findByUserId.mockResolvedValue([]);
 
       await transactionService.getTransactionsByUserId('user-id');

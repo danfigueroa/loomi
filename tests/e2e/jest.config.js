@@ -6,6 +6,14 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true
+      }
+    }
+  },
   collectCoverageFrom: [
     '../../customers-service/src/**/*.ts',
     '../../transactions-service/src/**/*.ts',

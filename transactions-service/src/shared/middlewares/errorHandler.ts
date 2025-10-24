@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '@/shared/errors/AppError';
-import { logger } from '@/config/logger';
+import { AppError } from '../errors/AppError';
+import { logger } from '../../config/logger';
 
 export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   if (error instanceof AppError) {
     logger.warn('Application Error', {
@@ -20,7 +20,7 @@ export const errorHandler = (
     res.status(error.statusCode).json({
       success: false,
       message: error.message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+      ...(process.env['NODE_ENV'] === 'development' && { stack: error.stack }),
     });
     return;
   }
@@ -36,7 +36,7 @@ export const errorHandler = (
   res.status(500).json({
     success: false,
     message: 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { 
+    ...(process.env['NODE_ENV'] === 'development' && { 
       originalMessage: error.message,
       stack: error.stack 
     }),

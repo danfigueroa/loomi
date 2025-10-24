@@ -1,4 +1,4 @@
-import { logger } from '@/config/logger';
+import { logger } from '../../config/logger';
 
 interface User {
   id: string;
@@ -22,9 +22,9 @@ export class CustomersServiceClient {
   private readonly recoveryTimeout = 60000;
 
   constructor() {
-    this.baseUrl = process.env.CUSTOMERS_SERVICE_URL || 'http://localhost:3001';
-    this.timeout = parseInt(process.env.HTTP_TIMEOUT || '5000');
-    this.maxRetries = parseInt(process.env.HTTP_MAX_RETRIES || '3');
+    this.baseUrl = process.env['CUSTOMERS_SERVICE_URL'] || 'http://localhost:3001';
+    this.timeout = parseInt(process.env['HTTP_TIMEOUT'] || '5000');
+    this.maxRetries = parseInt(process.env['HTTP_MAX_RETRIES'] || '3');
     this.circuitBreaker = {
       failures: 0,
       lastFailureTime: 0,
