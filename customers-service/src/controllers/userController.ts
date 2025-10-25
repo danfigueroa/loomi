@@ -93,6 +93,7 @@ class UserController {
           name: true,
           email: true,
           address: true,
+          isActive: true,
           profilePicture: true,
           createdAt: true,
           updatedAt: true
@@ -239,6 +240,7 @@ class UserController {
           name: true,
           email: true,
           address: true,
+          isActive: true,
           profilePicture: true,
           createdAt: true,
           updatedAt: true,

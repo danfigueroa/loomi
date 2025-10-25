@@ -66,6 +66,7 @@ export class UserService {
         name: true,
         email: true,
         address: true,
+        isActive: true,
         profilePicture: true,
         createdAt: true,
         updatedAt: true
@@ -269,6 +270,7 @@ export class UserService {
         name: true,
         email: true,
         address: true,
+        isActive: true,
         profilePicture: true,
         createdAt: true,
         updatedAt: true,
