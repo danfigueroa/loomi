@@ -20,6 +20,16 @@ jest.mock('../src/config/redis', () => ({
   },
 }));
 
+// Mock RabbitMQ message broker
+jest.mock('../src/infrastructure/messaging/RabbitMQBroker', () => ({
+  RabbitMQBroker: jest.fn().mockImplementation(() => ({
+    connect: jest.fn().mockResolvedValue(undefined),
+    disconnect: jest.fn().mockResolvedValue(undefined),
+    isConnected: jest.fn().mockReturnValue(true),
+    publish: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 // Mock the logger to avoid console output during tests
 jest.mock('../src/config/logger', () => ({
   logger: {

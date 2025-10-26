@@ -3,10 +3,12 @@ import { healthController } from '../../../src/controllers/healthController';
 import { DatabaseConnection } from '../../../src/config/database';
 import { RedisConnection } from '../../../src/config/redis';
 import { logger } from '../../../src/config/logger';
+// import { RabbitMQBroker } from '../../../src/infrastructure/messaging/RabbitMQBroker';
 
 jest.mock('../../../src/config/database');
 jest.mock('../../../src/config/redis');
 jest.mock('../../../src/config/logger');
+jest.mock('../../../src/infrastructure/messaging/RabbitMQBroker');
 
 describe('HealthController', () => {
   let mockRequest: Partial<Request>;
@@ -34,9 +36,15 @@ describe('HealthController', () => {
       const mockRedis = {
         ping: jest.fn().mockResolvedValue('PONG')
       };
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(true)
+      };
 
       (DatabaseConnection.getInstance as jest.Mock).mockReturnValue(mockDatabase);
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
+      
+      // Mock the healthController's messageBroker property
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 
@@ -47,7 +55,8 @@ describe('HealthController', () => {
           service: 'customers-service',
           checks: {
             database: 'healthy',
-            redis: 'healthy'
+            redis: 'healthy',
+            messageBroker: 'healthy'
           }
         })
       );
@@ -60,9 +69,13 @@ describe('HealthController', () => {
       const mockRedis = {
         ping: jest.fn().mockResolvedValue('PONG')
       };
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(true)
+      };
 
       (DatabaseConnection.getInstance as jest.Mock).mockReturnValue(mockDatabase);
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 
@@ -72,7 +85,8 @@ describe('HealthController', () => {
           status: 'unhealthy',
           checks: {
             database: 'unhealthy',
-            redis: 'healthy'
+            redis: 'healthy',
+            messageBroker: 'healthy'
           }
         })
       );
@@ -85,9 +99,13 @@ describe('HealthController', () => {
       const mockRedis = {
         ping: jest.fn().mockRejectedValue(new Error('Redis connection failed'))
       };
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(true)
+      };
 
       (DatabaseConnection.getInstance as jest.Mock).mockReturnValue(mockDatabase);
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 
@@ -97,7 +115,8 @@ describe('HealthController', () => {
           status: 'unhealthy',
           checks: {
             database: 'healthy',
-            redis: 'unhealthy'
+            redis: 'unhealthy',
+            messageBroker: 'healthy'
           }
         })
       );
@@ -110,9 +129,13 @@ describe('HealthController', () => {
       const mockRedis = {
         ping: jest.fn().mockRejectedValue(new Error('Redis connection failed'))
       };
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(false)
+      };
 
       (DatabaseConnection.getInstance as jest.Mock).mockReturnValue(mockDatabase);
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 
@@ -122,7 +145,8 @@ describe('HealthController', () => {
           status: 'unhealthy',
           checks: {
             database: 'unhealthy',
-            redis: 'unhealthy'
+            redis: 'unhealthy',
+            messageBroker: 'unhealthy'
           }
         })
       );
@@ -132,6 +156,10 @@ describe('HealthController', () => {
       (DatabaseConnection.getInstance as jest.Mock).mockImplementation(() => {
         throw new Error('Unexpected error');
       });
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(false)
+      };
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 
@@ -141,7 +169,8 @@ describe('HealthController', () => {
           status: 'unhealthy',
           checks: {
             database: 'unhealthy',
-            redis: 'unhealthy'
+            redis: 'unhealthy',
+            messageBroker: 'unhealthy'
           }
         })
       );
@@ -154,9 +183,13 @@ describe('HealthController', () => {
       const mockRedis = {
         ping: jest.fn().mockResolvedValue('PONG')
       };
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(true)
+      };
 
       (DatabaseConnection.getInstance as jest.Mock).mockReturnValue(mockDatabase);
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 
@@ -167,7 +200,8 @@ describe('HealthController', () => {
           responseTime: expect.any(Number),
           checks: {
             database: 'healthy',
-            redis: 'healthy'
+            redis: 'healthy',
+            messageBroker: 'healthy'
           }
         })
       );
@@ -177,6 +211,10 @@ describe('HealthController', () => {
       (DatabaseConnection.getInstance as jest.Mock).mockImplementation(() => {
         throw new Error('Unexpected error');
       });
+      const mockMessageBroker = {
+        isConnected: jest.fn().mockReturnValue(false)
+      };
+      (healthController as any).messageBroker = mockMessageBroker;
 
       await healthController.check(mockRequest as Request, mockResponse as Response);
 

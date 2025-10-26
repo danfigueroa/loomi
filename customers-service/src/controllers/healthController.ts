@@ -13,7 +13,7 @@ interface HealthStatus {
   checks: {
     database: 'healthy' | 'unhealthy';
     redis: 'healthy' | 'unhealthy';
-    rabbitmq: 'healthy' | 'unhealthy';
+    messageBroker: 'healthy' | 'unhealthy';
   };
 }
 
@@ -55,7 +55,7 @@ class HealthController {
         checks: {
           database: dbHealthy ? 'healthy' : 'unhealthy',
           redis: redisHealthy ? 'healthy' : 'unhealthy',
-          rabbitmq: rabbitmqHealthy ? 'healthy' : 'unhealthy'
+          messageBroker: rabbitmqHealthy ? 'healthy' : 'unhealthy'
         }
       };
 
@@ -80,7 +80,7 @@ class HealthController {
         checks: {
           database: 'unhealthy',
           redis: 'unhealthy',
-          rabbitmq: 'unhealthy'
+          messageBroker: 'unhealthy'
         }
       };
 

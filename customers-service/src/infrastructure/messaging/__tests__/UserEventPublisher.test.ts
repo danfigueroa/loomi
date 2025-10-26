@@ -36,12 +36,11 @@ describe('UserEventPublisher', () => {
           eventType: 'BankingDataUpdated',
           userId,
           timestamp: expect.any(String),
-          data: bankingData,
-        },
-        {
+          updatedFields: bankingData.updatedFields,
+          updatedAt: bankingData.updatedAt.toISOString(),
           correlationId: bankingData.correlationId,
-          persistent: true,
-        }
+        },
+        { correlationId: 'test-correlation-id', persistent: true }
       );
     });
 
@@ -58,7 +57,7 @@ describe('UserEventPublisher', () => {
       };
 
       await expect(publisher.publishBankingDataUpdated(userId, bankingData)).rejects.toThrow(
-        'Failed to publish banking data updated event'
+        'Publish failed'
       );
     });
   });
@@ -78,17 +77,17 @@ describe('UserEventPublisher', () => {
       await publisher.publishAuthenticationEvent(userId, authData);
 
       expect(mockBroker.publish).toHaveBeenCalledWith(
-        rabbitmqConfig.queues.authenticationEvents,
+        rabbitmqConfig.queues.authentication,
         {
-          eventType: 'UserAuthenticated',
+          eventType: 'Authentication',
           userId,
           timestamp: expect.any(String),
-          data: authData,
-        },
-        {
+          action: authData.action,
+          ipAddress: authData.ipAddress,
+          userAgent: authData.userAgent,
           correlationId: authData.correlationId,
-          persistent: true,
-        }
+        },
+        { correlationId: 'test-correlation-id', persistent: true }
       );
     });
 
@@ -107,7 +106,7 @@ describe('UserEventPublisher', () => {
       };
 
       await expect(publisher.publishAuthenticationEvent(userId, authData)).rejects.toThrow(
-        'Failed to publish authentication event'
+        'Publish failed'
       );
     });
   });
@@ -125,15 +124,16 @@ describe('UserEventPublisher', () => {
       await publisher.publishBankingDataUpdated(userId, bankingData);
 
       const publishCall = mockBroker.publish.mock.calls[0];
-      const eventData = publishCall[1];
+      const eventData = publishCall?.[1];
 
+      expect(eventData).toBeDefined();
       expect(eventData).toHaveProperty('eventType');
       expect(eventData).toHaveProperty('userId');
       expect(eventData).toHaveProperty('timestamp');
-      expect(eventData).toHaveProperty('data');
-      expect(eventData.eventType).toBe('BankingDataUpdated');
-      expect(eventData.userId).toBe(userId);
-      expect(typeof eventData.timestamp).toBe('string');
+      expect(eventData).toHaveProperty('updatedFields');
+      expect(eventData!['eventType']).toBe('BankingDataUpdated');
+      expect(eventData!['userId']).toBe(userId);
+      expect(typeof eventData!['timestamp']).toBe('string');
     });
 
     it('should include required event properties for authentication', async () => {
@@ -150,15 +150,16 @@ describe('UserEventPublisher', () => {
       await publisher.publishAuthenticationEvent(userId, authData);
 
       const publishCall = mockBroker.publish.mock.calls[0];
-      const eventData = publishCall[1];
+      const eventData = publishCall?.[1];
 
+      expect(eventData).toBeDefined();
       expect(eventData).toHaveProperty('eventType');
       expect(eventData).toHaveProperty('userId');
       expect(eventData).toHaveProperty('timestamp');
-      expect(eventData).toHaveProperty('data');
-      expect(eventData.eventType).toBe('UserAuthenticated');
-      expect(eventData.userId).toBe(userId);
-      expect(typeof eventData.timestamp).toBe('string');
+      expect(eventData).toHaveProperty('action');
+      expect(eventData!['eventType']).toBe('Authentication');
+      expect(eventData!['userId']).toBe(userId);
+      expect(typeof eventData!['timestamp']).toBe('string');
     });
   });
 });
