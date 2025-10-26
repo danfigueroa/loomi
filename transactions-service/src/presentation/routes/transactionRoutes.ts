@@ -3,6 +3,8 @@ import { TransactionController } from '../controllers/TransactionController';
 import { TransactionService } from '../../application/services/TransactionService';
 import { TransactionRepository } from '../../infrastructure/repositories/TransactionRepository';
 import { CustomerService } from '../../infrastructure/services/CustomerService';
+import { TransactionEventPublisher } from '../../infrastructure/messaging/TransactionEventPublisher';
+import { RabbitMQBroker } from '../../infrastructure/messaging/RabbitMQBroker';
 import { prisma } from '../../config/database';
 import { authenticateToken } from '../../shared/middlewares/auth';
 import { createRateLimiter } from '../../shared/middlewares/rateLimiter';
@@ -11,7 +13,9 @@ const router = Router();
 
 const transactionRepository = new TransactionRepository(prisma);
 const customerService = new CustomerService();
-const transactionService = new TransactionService(transactionRepository, customerService);
+const messageBroker = new RabbitMQBroker();
+const transactionEventPublisher = new TransactionEventPublisher(messageBroker);
+const transactionService = new TransactionService(transactionRepository, customerService, transactionEventPublisher);
 const transactionController = new TransactionController(transactionService);
 
 const transactionRateLimit = process.env['NODE_ENV'] === 'test' 

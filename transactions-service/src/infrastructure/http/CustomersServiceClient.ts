@@ -110,7 +110,25 @@ export class CustomersServiceClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      const responseData: any = await response.json();
+      
+      // Extract user data from the API response structure
+      if (responseData.success && responseData.data && responseData.data.user) {
+        const user = responseData.data.user;
+        // Ensure all required fields are present, including isActive
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          isActive: user.isActive !== undefined ? user.isActive : true, // Default to true if not present
+          address: user.address || '',
+          profilePicture: user.profilePicture || null,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        };
+      }
+      
+      return responseData;
     } catch (error) {
       clearTimeout(timeoutId);
       

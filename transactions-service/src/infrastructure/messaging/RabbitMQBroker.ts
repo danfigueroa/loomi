@@ -1,4 +1,4 @@
-import amqp, { Connection, Channel, Message } from 'amqplib';
+import amqp, { Channel, Message } from 'amqplib';
 import { 
   IMessageBroker, 
   MessageHandler, 
@@ -14,7 +14,7 @@ import { AppError } from '../../shared/errors/AppError';
  * Infrastructure layer - Clean Architecture
  */
 export class RabbitMQBroker implements IMessageBroker {
-  private connection: Connection | null = null;
+  private connection: any = null;
   private channel: Channel | null = null;
   private reconnectAttempts = 0;
   private isReconnecting = false;
@@ -47,7 +47,7 @@ export class RabbitMQBroker implements IMessageBroker {
       logger.info('Successfully connected to RabbitMQ');
 
     } catch (error) {
-      logger.error('Failed to connect to RabbitMQ', { error: error.message });
+      logger.error('Failed to connect to RabbitMQ', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw new AppError('Failed to connect to RabbitMQ', 500);
     }
   }
@@ -69,7 +69,7 @@ export class RabbitMQBroker implements IMessageBroker {
 
       logger.info('Disconnected from RabbitMQ');
     } catch (error) {
-      logger.error('Error disconnecting from RabbitMQ', { error: error.message });
+      logger.error('Error disconnecting from RabbitMQ', { error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -108,7 +108,7 @@ export class RabbitMQBroker implements IMessageBroker {
     } catch (error) {
       logger.error('Failed to publish message', { 
         queue, 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         correlationId: options.correlationId 
       });
       throw new AppError('Failed to publish message', 500);
@@ -150,7 +150,7 @@ export class RabbitMQBroker implements IMessageBroker {
             logger.error('Error processing message', { 
               queue, 
               correlationId,
-              error: error.message 
+              error: error instanceof Error ? error.message : 'Unknown error'
             });
 
             // Rejeita a mensagem sem requeue em caso de erro de processamento
@@ -167,7 +167,7 @@ export class RabbitMQBroker implements IMessageBroker {
       logger.info('Started consuming messages', { queue });
 
     } catch (error) {
-      logger.error('Failed to start consuming messages', { queue, error: error.message });
+      logger.error('Failed to start consuming messages', { queue, error: error instanceof Error ? error.message : 'Unknown error' });
       throw new AppError('Failed to start consuming messages', 500);
     }
   }
@@ -176,7 +176,7 @@ export class RabbitMQBroker implements IMessageBroker {
    * Verifica se está conectado
    */
   isConnected(): boolean {
-    return this.connection !== null && this.channel !== null && !this.connection.connection.destroyed;
+    return this.connection !== null && this.channel !== null && !this.connection.connection?.destroyed;
   }
 
   /**
@@ -212,7 +212,7 @@ export class RabbitMQBroker implements IMessageBroker {
       logger.info('Exchanges and queues setup completed');
 
     } catch (error) {
-      logger.error('Failed to setup exchanges and queues', { error: error.message });
+      logger.error('Failed to setup exchanges and queues', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   }
@@ -259,7 +259,7 @@ export class RabbitMQBroker implements IMessageBroker {
       this.isReconnecting = false;
       logger.error('Reconnection attempt failed', { 
         attempt: this.reconnectAttempts,
-        error: error.message 
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }

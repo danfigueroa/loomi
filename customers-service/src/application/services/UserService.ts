@@ -149,8 +149,8 @@ export class UserService {
         userId: user.id,
         action: 'login',
         timestamp: new Date(),
-        ipAddress,
-        userAgent,
+        ipAddress: ipAddress || '',
+        userAgent: userAgent || '',
         correlationId,
       });
     } catch (error) {
@@ -198,23 +198,24 @@ export class UserService {
     if (email && email !== existingUser.email) updatedFields.push('email');
     if (address && address !== existingUser.address) updatedFields.push('address');
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(name && { name }),
-        ...(email && { email }),
-        ...(address && { address })
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        address: true,
-        profilePicture: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
+    await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(name && { name }),
+          ...(email && { email }),
+          ...(address && { address })
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          address: true,
+          isActive: true,
+          profilePicture: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
 
     if (bankingDetails) {
       const existingBankingDetails = await this.prisma.bankingDetails.findUnique({
@@ -303,6 +304,7 @@ export class UserService {
         name: true,
         email: true,
         address: true,
+        isActive: true,
         profilePicture: true,
         createdAt: true,
         updatedAt: true,

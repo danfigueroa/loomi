@@ -5,7 +5,7 @@ import { DatabaseConnection } from './config/database';
 import { RedisConnection } from './config/redis';
 import { RabbitMQBroker } from './infrastructure/messaging/RabbitMQBroker';
 import { UserEventPublisher } from './infrastructure/messaging/UserEventPublisher';
-import { UserService } from './application/services/UserService';
+
 import { UserController } from './controllers/userController';
 import { createUserRoutes } from './routes/userRoutes';
 
@@ -13,6 +13,8 @@ const PORT = process.env['PORT'] || 3001;
 
 const startServer = async (): Promise<void> => {
   try {
+    logger.info('Starting customers service...');
+    
     await DatabaseConnection.getInstance().$connect();
     logger.info('Database connected successfully');
 
@@ -26,7 +28,6 @@ const startServer = async (): Promise<void> => {
 
     // Injeção de dependências
     const userEventPublisher = new UserEventPublisher(messageBroker);
-    const userService = new UserService(userEventPublisher);
     const userController = new UserController(userEventPublisher);
 
     // Configurar health check com RabbitMQ
@@ -43,7 +44,7 @@ const startServer = async (): Promise<void> => {
       logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {
-    logger.error('Failed to start server', { error });
+    logger.error('Failed to start server', { error: error instanceof Error ? error.message : 'Unknown error' });
     process.exit(1);
   }
 };

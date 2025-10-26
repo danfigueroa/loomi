@@ -29,8 +29,10 @@ export class TransactionEventPublisher implements ITransactionEventPublisher {
           timestamp: new Date().toISOString(),
           data,
         },
-        {
+        data.correlationId ? {
           correlationId: data.correlationId,
+          persistent: true,
+        } : {
           persistent: true,
         }
       );
@@ -43,7 +45,7 @@ export class TransactionEventPublisher implements ITransactionEventPublisher {
     } catch (error) {
       logger.error('Failed to publish transaction created event', { 
         transactionId, 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         correlationId: data.correlationId 
       });
       throw new AppError('Failed to publish transaction created event', 500);
@@ -63,8 +65,10 @@ export class TransactionEventPublisher implements ITransactionEventPublisher {
           timestamp: new Date().toISOString(),
           data,
         },
-        {
+        data.correlationId ? {
           correlationId: data.correlationId,
+          persistent: true,
+        } : {
           persistent: true,
         }
       );
@@ -77,7 +81,7 @@ export class TransactionEventPublisher implements ITransactionEventPublisher {
     } catch (error) {
       logger.error('Failed to publish transaction processed event', { 
         transactionId, 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         correlationId: data.correlationId 
       });
       throw new AppError('Failed to publish transaction processed event', 500);
@@ -97,8 +101,10 @@ export class TransactionEventPublisher implements ITransactionEventPublisher {
           timestamp: new Date().toISOString(),
           data,
         },
-        {
+        data.correlationId ? {
           correlationId: data.correlationId,
+          persistent: true,
+        } : {
           persistent: true,
         }
       );
@@ -111,7 +117,7 @@ export class TransactionEventPublisher implements ITransactionEventPublisher {
     } catch (error) {
       logger.error('Failed to publish transaction cancelled event', { 
         transactionId, 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         correlationId: data.correlationId 
       });
       throw new AppError('Failed to publish transaction cancelled event', 500);

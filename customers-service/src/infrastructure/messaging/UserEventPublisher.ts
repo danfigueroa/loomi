@@ -28,7 +28,7 @@ export class UserEventPublisher implements IUserEventPublisher {
           data,
         },
         {
-          correlationId: data.correlationId,
+          ...(data.correlationId && { correlationId: data.correlationId }),
           persistent: true,
         }
       );
@@ -41,7 +41,7 @@ export class UserEventPublisher implements IUserEventPublisher {
     } catch (error) {
       logger.error('Failed to publish banking data updated event', { 
         userId, 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         correlationId: data.correlationId 
       });
       throw new Error('Failed to publish banking data updated event');
@@ -62,7 +62,7 @@ export class UserEventPublisher implements IUserEventPublisher {
           data,
         },
         {
-          correlationId: data.correlationId,
+          ...(data.correlationId && { correlationId: data.correlationId }),
           persistent: true,
         }
       );
@@ -76,7 +76,7 @@ export class UserEventPublisher implements IUserEventPublisher {
     } catch (error) {
       logger.error('Failed to publish authentication event', { 
         userId, 
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         correlationId: data.correlationId 
       });
       throw new Error('Failed to publish authentication event');

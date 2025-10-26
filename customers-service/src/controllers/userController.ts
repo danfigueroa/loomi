@@ -102,6 +102,18 @@ class UserController {
 
       await this.redis.setEx(`user:${user.id}:password`, 86400, hashedPassword);
 
+      // Publicar evento de autenticação
+      try {
+        await this.userEventPublisher.publishAuthenticationEvent(user.id, {
+          userId: user.id,
+          action: 'login',
+          timestamp: new Date(),
+          correlationId: req.correlationId,
+        });
+      } catch (error) {
+        logger.error('Failed to publish authentication event:', error);
+      }
+
       logger.info('User registered successfully', {
         userId: user.id,
         email: user.email,
@@ -150,6 +162,7 @@ class UserController {
           name: true,
           email: true,
           address: true,
+          isActive: true,
           profilePicture: true,
           createdAt: true,
           updatedAt: true
@@ -273,7 +286,10 @@ class UserController {
       res.status(200).json({
         success: true,
         data: {
-          user
+          user: {
+            ...user,
+            isActive: user.isActive
+          }
         },
         correlationId: req.correlationId
       });
@@ -389,6 +405,7 @@ class UserController {
           name: true,
           email: true,
           address: true,
+          isActive: true,
           profilePicture: true,
           createdAt: true,
           updatedAt: true,
@@ -421,7 +438,10 @@ class UserController {
       res.status(200).json({
         success: true,
         data: {
-          user
+          user: {
+            ...user,
+            isActive: user.isActive
+          }
         },
         correlationId: req.correlationId
       });
@@ -528,6 +548,7 @@ class UserController {
           name: true,
           email: true,
           address: true,
+          isActive: true,
           profilePicture: true,
           createdAt: true,
           updatedAt: true,
