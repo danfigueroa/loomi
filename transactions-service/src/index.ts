@@ -8,6 +8,7 @@ import { TransactionEventPublisher } from './infrastructure/messaging/Transactio
 import { TransactionService } from './application/services/TransactionService';
 import { CustomerService } from './infrastructure/services/CustomerService';
 import { TransactionRepository } from './infrastructure/repositories/TransactionRepository';
+import { healthController } from './controllers/healthController';
 
 const port = process.env['PORT'] || 3002;
 
@@ -23,9 +24,15 @@ const startServer = async (): Promise<void> => {
     await rabbitMQ.connect();
 
     const transactionEventPublisher = new TransactionEventPublisher(rabbitMQ);
-    const healthController = new HealthController(rabbitMQ);
+    const transactionRepository = new TransactionRepository(DatabaseConnection.getInstance());
+    const customerService = new CustomerService();
+    const transactionService = new TransactionService(
+      transactionRepository,
+      customerService,
+      transactionEventPublisher
+    );
+    healthController.setMessageBroker(rabbitMQ);
 
-    // Disponibilizar o service globalmente para os controllers
     (global as any).transactionService = transactionService;
 
     app.listen(port, () => {

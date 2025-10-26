@@ -7,7 +7,7 @@ import { RabbitMQBroker } from './infrastructure/messaging/RabbitMQBroker';
 import { UserEventPublisher } from './infrastructure/messaging/UserEventPublisher';
 
 import { UserController } from './controllers/userController';
-import { HealthController } from './controllers/healthController';
+import { healthController } from './controllers/healthController';
 import { createUserRoutes } from './routes/userRoutes';
 
 const PORT = process.env['PORT'] || 3001;
@@ -26,7 +26,8 @@ const startServer = async (): Promise<void> => {
     await rabbitMQ.connect();
 
     const userEventPublisher = new UserEventPublisher(rabbitMQ);
-    const healthController = new HealthController(rabbitMQ);
+    const userController = new UserController(userEventPublisher);
+    healthController.setMessageBroker(rabbitMQ);
     const userRoutes = createUserRoutes(userController);
     app.use('/api/users', userRoutes);
 
