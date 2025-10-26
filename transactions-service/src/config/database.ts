@@ -63,5 +63,5 @@ class DatabaseConnection {
   }
 }
 
-export const prisma = process.env['NODE_ENV'] === 'test' ? null : DatabaseConnection.getInstance();
+export const prisma = DatabaseConnection.getInstance();
 export { DatabaseConnection };

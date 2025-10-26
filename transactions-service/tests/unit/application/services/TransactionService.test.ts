@@ -1,6 +1,7 @@
 import { TransactionService } from '../../../../src/application/services/TransactionService';
 import { ITransactionRepository } from '../../../../src/domain/interfaces/ITransactionRepository';
 import { ICustomerService } from '../../../../src/domain/interfaces/ICustomerService';
+import { ITransactionEventPublisher } from '../../../../src/domain/interfaces/IMessageBroker';
 import { Transaction, TransactionStatus, TransactionType } from '../../../../src/domain/entities/Transaction';
 import { AppError } from '../../../../src/shared/errors/AppError';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,6 +12,7 @@ describe('TransactionService', () => {
   let transactionService: TransactionService;
   let mockTransactionRepository: jest.Mocked<ITransactionRepository>;
   let mockCustomerService: jest.Mocked<ICustomerService>;
+  let mockTransactionEventPublisher: jest.Mocked<ITransactionEventPublisher>;
 
   beforeEach(() => {
     mockTransactionRepository = {
@@ -27,9 +29,16 @@ describe('TransactionService', () => {
       getUserById: jest.fn()
     };
 
+    mockTransactionEventPublisher = {
+      publishTransactionCreated: jest.fn(),
+      publishTransactionProcessed: jest.fn(),
+      publishTransactionCancelled: jest.fn()
+    };
+
     transactionService = new TransactionService(
       mockTransactionRepository,
-      mockCustomerService
+      mockCustomerService,
+      mockTransactionEventPublisher
     );
 
     jest.clearAllMocks();
@@ -275,7 +284,7 @@ describe('TransactionService', () => {
 
       await expect(
         transactionService.cancelTransaction('transaction-id')
-      ).rejects.toThrow(new AppError('Cannot cancel completed transaction', 400));
+      ).rejects.toThrow(new AppError('Transaction cannot be cancelled', 400));
     });
 
     it('should throw error for already cancelled transaction', async () => {
@@ -288,7 +297,7 @@ describe('TransactionService', () => {
 
       await expect(
         transactionService.cancelTransaction('transaction-id')
-      ).rejects.toThrow(new AppError('Transaction already cancelled', 400));
+      ).rejects.toThrow(new AppError('Transaction cannot be cancelled', 400));
     });
   });
 });

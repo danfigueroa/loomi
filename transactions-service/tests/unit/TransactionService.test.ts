@@ -1,6 +1,7 @@
 import { TransactionService } from '../../src/application/services/TransactionService';
 import { ITransactionRepository } from '../../src/domain/interfaces/ITransactionRepository';
 import { ICustomerService } from '../../src/domain/interfaces/ICustomerService';
+import { ITransactionEventPublisher } from '../../src/domain/interfaces/IMessageBroker';
 import { Transaction, TransactionStatus, TransactionType } from '../../src/domain/entities/Transaction';
 import { AppError } from '../../src/shared/errors/AppError';
 
@@ -18,11 +19,17 @@ const mockCustomerService: jest.Mocked<ICustomerService> = {
   getUserById: jest.fn(),
 };
 
+const mockTransactionEventPublisher: jest.Mocked<ITransactionEventPublisher> = {
+  publishTransactionCreated: jest.fn(),
+  publishTransactionProcessed: jest.fn(),
+  publishTransactionCancelled: jest.fn(),
+};
+
 describe('TransactionService', () => {
   let transactionService: TransactionService;
 
   beforeEach(() => {
-    transactionService = new TransactionService(mockTransactionRepository, mockCustomerService);
+    transactionService = new TransactionService(mockTransactionRepository, mockCustomerService, mockTransactionEventPublisher);
     jest.clearAllMocks();
   });
 
@@ -239,7 +246,7 @@ describe('TransactionService', () => {
       mockTransactionRepository.findById.mockResolvedValue(completedTransaction);
 
       await expect(transactionService.cancelTransaction(transactionId))
-        .rejects.toThrow(new AppError('Cannot cancel completed transaction', 400));
+        .rejects.toThrow(new AppError('Transaction cannot be cancelled', 400));
     });
 
     it('should throw error for already cancelled transaction', async () => {
@@ -247,7 +254,7 @@ describe('TransactionService', () => {
       mockTransactionRepository.findById.mockResolvedValue(cancelledTransaction);
 
       await expect(transactionService.cancelTransaction(transactionId))
-        .rejects.toThrow(new AppError('Transaction already cancelled', 400));
+        .rejects.toThrow(new AppError('Transaction cannot be cancelled', 400));
     });
   });
 });

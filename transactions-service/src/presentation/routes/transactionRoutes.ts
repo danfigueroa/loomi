@@ -8,15 +8,12 @@ import { TransactionEventPublisher } from '../../infrastructure/messaging/Transa
 import { prisma } from '../../config/database';
 import { authenticateToken } from '../../shared/middlewares/auth';
 import { createRateLimiter } from '../../shared/middlewares/rateLimiter';
-import { AppError } from '../../shared/errors/AppError';
+
 import { RequestWithCorrelationId } from '../../middlewares/correlationId';
 
 const router = Router();
 
-// Verificar se prisma não é null
-if (!prisma) {
-  throw new AppError('Database connection not available', 500);
-}
+// Database connection is always available now
 
 const transactionRepository = new TransactionRepository(prisma);
 const customerService = new CustomerService();

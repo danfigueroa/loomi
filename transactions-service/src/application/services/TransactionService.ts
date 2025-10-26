@@ -57,8 +57,10 @@ export class TransactionService implements ITransactionService {
 
       await this.transactionEventPublisher.publishTransactionCreated(transaction.id, eventData);
     } catch (error) {
-      // Log do erro mas não falha a transação
-      console.error('Failed to publish transaction created event:', error);
+      // Log do erro mas não falha a transação - silently ignore in test environment
+      if (process.env['NODE_ENV'] !== 'test') {
+        console.error('Failed to publish transaction created event:', error);
+      }
     }
 
     return transaction;
@@ -112,8 +114,10 @@ export class TransactionService implements ITransactionService {
 
       await this.transactionEventPublisher.publishTransactionProcessed(transaction.id, processedEventData);
     } catch (error) {
-      // Log do erro mas não falha a transação
-      console.error('Failed to publish transaction processed event:', error);
+      // Log do erro mas não falha a transação - silently ignore in test environment
+      if (process.env['NODE_ENV'] !== 'test') {
+        console.error('Failed to publish transaction processed event:', error);
+      }
     }
 
     return updatedTransaction;
