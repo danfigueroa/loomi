@@ -1,6 +1,6 @@
-import { Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import { logger } from '../config/logger';
-import { RequestWithCorrelationId } from './correlationId';
+import type { RequestWithCorrelationId } from './correlationId';
 
 interface ErrorWithStatus extends Error {
   status?: number;
@@ -11,7 +11,7 @@ export const errorHandler = (
   error: ErrorWithStatus,
   req: RequestWithCorrelationId,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void => {
   const status = error.status || error.statusCode || 500;
   const message = error.message || 'Internal Server Error';

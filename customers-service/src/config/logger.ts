@@ -7,7 +7,7 @@ const logger = createLogger({
   format: combine(
     timestamp(),
     errors({ stack: true }),
-    json()
+    json(),
   ),
   defaultMeta: { service: 'customers-service' },
   transports: [
@@ -20,8 +20,8 @@ if (process.env['NODE_ENV'] !== 'production') {
   logger.add(new transports.Console({
     format: combine(
       colorize(),
-      simple()
-    )
+      simple(),
+    ),
   }));
 }
 

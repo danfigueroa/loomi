@@ -7,7 +7,7 @@ class RedisConnection {
   public static getInstance(): Redis {
     if (!RedisConnection.instance) {
       const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
-      
+
       RedisConnection.instance = new Redis(redisUrl, {
         enableReadyCheck: false,
         maxRetriesPerRequest: 3,

@@ -22,7 +22,7 @@ O sistema é composto por dois microsserviços principais:
 - **Jest** para testes unitários e de integração
 - **Artillery** para testes de performance
 - **Swagger/OpenAPI** para documentação de APIs
-- **NYC/Istanbul** para cobertura de testes
+- **Jest** para testes unitários, integração e cobertura de código
 - **GitHub Actions** para CI/CD
 
 ## 🚀 Funcionalidades Implementadas
@@ -68,7 +68,7 @@ O sistema é composto por dois microsserviços principais:
 - Documentação de autenticação JWT
 
 ✅ **Cobertura de Testes**
-- NYC/Istanbul configurado com quality gates (80%)
+- Jest configurado com quality gates (80%)
 - Relatórios de cobertura em HTML e LCOV
 - Testes unitários para controllers, services e repositories
 - Testes de integração para fluxos completos

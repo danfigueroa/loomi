@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { DatabaseConnection } from '../config/database';
 import { RedisConnection } from '../config/redis';
 import { logger } from '../config/logger';
-import { IMessageBroker } from '../domain/interfaces/IMessageBroker';
+import type { IMessageBroker } from '../domain/interfaces/IMessageBroker';
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy';
@@ -30,7 +30,7 @@ class HealthController {
       logger.info('Health check requested', {
         method: _req.method,
         url: _req.url,
-        userAgent: _req.get('User-Agent')
+        userAgent: _req.get('User-Agent'),
       });
 
       if (process.env['NODE_ENV'] === 'test') {
@@ -44,17 +44,17 @@ class HealthController {
             database: 'healthy',
             redis: 'healthy',
             customersService: 'healthy',
-            rabbitmq: 'healthy'
-          }
+            rabbitmq: 'healthy',
+          },
         };
 
         res.status(200).json(healthStatus);
         return;
       }
 
-      logger.info('Starting health check', { 
+      logger.info('Starting health check', {
         nodeEnv: process.env['NODE_ENV'],
-        logLevel: process.env['LOG_LEVEL']
+        logLevel: process.env['LOG_LEVEL'],
       });
 
       let dbHealthy = false;
@@ -89,7 +89,7 @@ class HealthController {
       }
 
       const allHealthy = dbHealthy && redisHealthy && customersHealthy;
-      
+
       const healthStatus: HealthStatus = {
         status: allHealthy ? 'healthy' : 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -100,22 +100,22 @@ class HealthController {
           database: dbHealthy ? 'healthy' : 'unhealthy',
           redis: redisHealthy ? 'healthy' : 'unhealthy',
           customersService: customersHealthy ? 'healthy' : 'unhealthy',
-          rabbitmq: this.messageBroker?.isConnected() ? 'healthy' : 'unhealthy'
-        }
+          rabbitmq: this.messageBroker?.isConnected() ? 'healthy' : 'unhealthy',
+        },
       };
 
-      logger.info('Health check completed', { 
+      logger.info('Health check completed', {
         status: healthStatus.status,
-        checks: healthStatus.checks
+        checks: healthStatus.checks,
       });
 
       const statusCode = allHealthy ? 200 : 503;
       res.status(statusCode).json(healthStatus);
 
     } catch (error) {
-      logger.error('Health check error', { 
+      logger.error('Health check error', {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
 
       const healthStatus: HealthStatus = {
@@ -128,8 +128,8 @@ class HealthController {
           database: 'unhealthy',
           redis: 'unhealthy',
           customersService: 'unhealthy',
-          rabbitmq: 'unhealthy'
-        }
+          rabbitmq: 'unhealthy',
+        },
       };
 
       res.status(503).json(healthStatus);
@@ -141,14 +141,14 @@ class HealthController {
     try {
       const db = DatabaseConnection.getInstance();
       logger.info('Database instance obtained');
-      
+
       const result = await db.$queryRaw`SELECT 1 as test`;
       logger.info('Database health check passed', { result });
     } catch (error) {
-      logger.error('Database connection error details', { 
+      logger.error('Database connection error details', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        databaseUrl: process.env['DATABASE_URL'] ? 'configured' : 'not configured'
+        databaseUrl: process.env['DATABASE_URL'] ? 'configured' : 'not configured',
       });
       throw new Error(`Database check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -159,14 +159,14 @@ class HealthController {
     try {
       const redis = RedisConnection.getInstance();
       logger.info('Redis instance obtained');
-      
+
       const result = await redis.ping();
       logger.info('Redis health check passed', { result });
     } catch (error) {
-      logger.error('Redis connection error details', { 
+      logger.error('Redis connection error details', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        redisUrl: process.env['REDIS_URL'] ? 'configured' : 'not configured'
+        redisUrl: process.env['REDIS_URL'] ? 'configured' : 'not configured',
       });
       throw new Error(`Redis check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -175,22 +175,26 @@ class HealthController {
   private async checkCustomersService(): Promise<void> {
     const customersServiceUrl = process.env['CUSTOMERS_SERVICE_URL'] || 'http://localhost:3001';
     logger.info('Starting customers service health check', { url: customersServiceUrl });
-    
+
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const axios = require('axios');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const response = await axios.get(`${customersServiceUrl}/health`, {
-        timeout: 5000
+        timeout: 5000,
       });
-      
-      logger.info('Customers service health check passed', { 
+
+      logger.info('Customers service health check passed', {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         status: response.status,
-        data: response.data
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        data: response.data,
       });
     } catch (error) {
-      logger.error('Customers service connection error details', { 
+      logger.error('Customers service connection error details', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        url: customersServiceUrl
+        url: customersServiceUrl,
       });
       throw new Error(`Customers service check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

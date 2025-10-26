@@ -1,5 +1,6 @@
-import { Router, Request, Response } from 'express';
-import { UserController } from '../controllers/userController';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
+import type { UserController } from '../controllers/userController';
 import { authenticateToken } from '../middlewares/auth';
 
 /**
@@ -8,9 +9,9 @@ import { authenticateToken } from '../middlewares/auth';
  *   - name: 👥 Usuários
  *     description: |
  *       **Sistema Completo de Gerenciamento de Usuários**
- *       
+ *
  *       Gerencie todo o ciclo de vida dos usuários da sua aplicação com segurança e eficiência.
- *       
+ *
  *       **🚀 Recursos Principais:**
  *       - ✅ Registro seguro com validações
  *       - 🔐 Autenticação JWT robusta
@@ -18,14 +19,14 @@ import { authenticateToken } from '../middlewares/auth';
  *       - 📊 Gestão completa de dados
  *       - 🔒 Segurança avançada
  *       - 📱 Suporte a fotos de perfil
- *       
+ *
  *       **💡 Casos de Uso:**
  *       - Onboarding de novos usuários
  *       - Autenticação e autorização
  *       - Gestão de perfis pessoais
  *       - Administração de contas
  *       - Integração com sistemas externos
- *       
+ *
  *       **🛡️ Segurança:**
  *       - Hash seguro de senhas (bcrypt)
  *       - Tokens JWT com expiração
@@ -37,14 +38,14 @@ import { authenticateToken } from '../middlewares/auth';
 export function createUserRoutes(userController: UserController): Router {
   const router = Router();
 
-/**
+  /**
  * @swagger
  * /api/users/register:
  *   post:
  *     summary: 🚀 Registrar Novo Usuário
  *     description: |
  *       Endpoint otimizado para criação de contas com validações completas e segurança avançada.
- *       
+ *
  *       **✨ Destaques:**
  *       - Validação automática de email único
  *       - Hash seguro da senha
@@ -52,16 +53,16 @@ export function createUserRoutes(userController: UserController): Router {
  *       - Eventos de notificação automáticos
  *     tags: [👥 Usuários]
  */
-router.post('/register', (req: Request, res: Response) => userController.register(req as any, res));
+  router.post('/register', (req: Request, res: Response) => userController.register(req as any, res));
 
-/**
+  /**
  * @swagger
  * /api/users/login:
  *   post:
  *     summary: 🔐 Fazer Login
  *     description: |
  *       Autenticação segura com geração de JWT token para acesso às rotas protegidas.
- *       
+ *
  *       **✨ Destaques:**
  *       - Verificação segura de credenciais
  *       - Token JWT com expiração configurável
@@ -69,22 +70,22 @@ router.post('/register', (req: Request, res: Response) => userController.registe
  *       - Logs de auditoria automáticos
  *     tags: [👥 Usuários]
  */
-router.post('/login', (req: Request, res: Response) => userController.login(req as any, res));
+  router.post('/login', (req: Request, res: Response) => userController.login(req as any, res));
 
-/**
+  /**
  * @swagger
  * /api/users/profile:
  *   get:
  *     summary: 👤 Obter Perfil do Usuário
  *     description: |
  *       Recupera informações completas do perfil do usuário autenticado.
- *       
+ *
  *       **📊 Informações Incluídas:**
  *       - Dados pessoais completos
  *       - Foto de perfil (se disponível)
  *       - Timestamps de criação e atualização
  *       - Status da conta
- *       
+ *
  *       **🔒 Segurança:**
  *       - Requer autenticação JWT
  *       - Acesso apenas aos próprios dados
@@ -131,9 +132,9 @@ router.post('/login', (req: Request, res: Response) => userController.login(req 
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/profile', authenticateToken as any, (req: Request, res: Response) => userController.getProfile(req as any, res));
+  router.get('/profile', authenticateToken as any, (req: Request, res: Response) => userController.getProfile(req as any, res));
 
-/**
+  /**
  * @swagger
  * /api/users/profile:
  *   put:
@@ -169,9 +170,9 @@ router.get('/profile', authenticateToken as any, (req: Request, res: Response) =
  *       409:
  *         description: Email já em uso
  */
-router.put('/profile', authenticateToken as any, (req: Request, res: Response) => userController.updateProfile(req as any, res));
+  router.put('/profile', authenticateToken as any, (req: Request, res: Response) => userController.updateProfile(req as any, res));
 
-/**
+  /**
  * @swagger
  * /api/users/{userId}:
  *   patch:
@@ -227,9 +228,9 @@ router.put('/profile', authenticateToken as any, (req: Request, res: Response) =
  *       409:
  *         description: Email já em uso
  */
-router.patch('/:userId', (req: Request, res) => userController.updateUserById(req as any, res));
+  router.patch('/:userId', (req: Request, res) => userController.updateUserById(req as any, res));
 
-/**
+  /**
  * @swagger
  * /api/users/{userId}/profile-picture:
  *   patch:
@@ -263,9 +264,9 @@ router.patch('/:userId', (req: Request, res) => userController.updateUserById(re
  *       404:
  *         description: Usuário não encontrado
  */
-router.patch('/:userId/profile-picture', (req: Request, res) => userController.updateProfilePicture(req as any, res));
+  router.patch('/:userId/profile-picture', (req: Request, res) => userController.updateProfilePicture(req as any, res));
 
-/**
+  /**
  * @swagger
  * /api/users/{userId}:
  *   get:
@@ -285,7 +286,7 @@ router.patch('/:userId/profile-picture', (req: Request, res) => userController.u
  *       404:
  *         description: Usuário não encontrado
  */
-router.get('/:userId', (req: Request, res) => userController.getUserById(req as any, res));
+  router.get('/:userId', (req: Request, res) => userController.getUserById(req as any, res));
 
   return router;
 }
