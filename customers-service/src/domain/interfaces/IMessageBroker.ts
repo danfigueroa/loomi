@@ -1,3 +1,5 @@
+import { MessagePayload, MessageHandler, PublishOptions, UserEventPayload } from '../../types/messaging.types';
+
 /**
  * Interface para definir contratos de mensageria
  * Seguindo padrões de Clean Architecture
@@ -19,7 +21,7 @@ export interface IMessageBroker {
    * @param message Mensagem a ser publicada
    * @param options Opções adicionais para publicação
    */
-  publish(queue: string, message: any, options?: PublishOptions): Promise<void>;
+  publish(queue: string, message: MessagePayload, options?: PublishOptions): Promise<void>;
 
   /**
    * Consome mensagens de uma fila específica
@@ -36,24 +38,6 @@ export interface IMessageBroker {
 }
 
 /**
- * Interface para definir o handler de mensagens
- */
-export interface MessageHandler {
-  (message: any, ack: () => void, nack: (requeue?: boolean) => void): Promise<void>;
-}
-
-/**
- * Opções para publicação de mensagens
- */
-export interface PublishOptions {
-  persistent?: boolean;
-  priority?: number;
-  expiration?: string;
-  correlationId?: string;
-  replyTo?: string;
-}
-
-/**
  * Opções para consumo de mensagens
  */
 export interface ConsumeOptions {
@@ -67,6 +51,14 @@ export interface ConsumeOptions {
  * Interface para eventos de usuário
  */
 export interface IUserEventPublisher {
+  /**
+   * Publica evento de usuário registrado
+   * @param userId ID do usuário
+   * @param data Dados do evento
+   * @param correlationId ID de correlação
+   */
+  publishUserRegistered(userId: string, data: UserEventPayload, correlationId?: string): Promise<void>;
+
   /**
    * Publica evento de dados bancários atualizados
    * @param userId ID do usuário

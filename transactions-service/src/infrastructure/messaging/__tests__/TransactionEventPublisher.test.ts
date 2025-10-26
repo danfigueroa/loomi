@@ -144,7 +144,7 @@ describe('TransactionEventPublisher', () => {
       await publisher.publishTransactionCreated(transactionId, transactionData);
 
       const publishCall = mockBroker.publish.mock.calls[0];
-      const eventData = publishCall[1];
+      const eventData = publishCall?.[1];
 
       expect(eventData).toHaveProperty('eventType');
       expect(eventData).toHaveProperty('transactionId');

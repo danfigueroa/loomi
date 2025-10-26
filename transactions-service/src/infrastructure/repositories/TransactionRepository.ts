@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Transaction as PrismaTransaction } from '@prisma/client';
 import { Transaction, TransactionStatus, TransactionType } from '../../domain/entities/Transaction';
 import { ITransactionRepository, CreateTransactionData } from '../../domain/interfaces/ITransactionRepository';
 
@@ -82,19 +82,30 @@ export class TransactionRepository implements ITransactionRepository {
     return transactions.map(this.mapToEntity);
   }
 
-  private mapToEntity(transaction: any): Transaction {
-    return {
+  private mapToEntity(transaction: PrismaTransaction): Transaction {
+    const entity: Transaction = {
       id: transaction.id,
       fromUserId: transaction.fromUserId,
       toUserId: transaction.toUserId,
       amount: parseFloat(transaction.amount.toString()),
-      description: transaction.description,
       status: transaction.status as TransactionStatus,
       type: transaction.type as TransactionType,
-      externalReference: transaction.externalReference,
       createdAt: transaction.createdAt,
       updatedAt: transaction.updatedAt,
-      processedAt: transaction.processedAt,
     };
+
+    if (transaction.description) {
+      entity.description = transaction.description;
+    }
+
+    if (transaction.externalReference) {
+      entity.externalReference = transaction.externalReference;
+    }
+
+    if (transaction.processedAt) {
+      entity.processedAt = transaction.processedAt;
+    }
+
+    return entity;
   }
 }

@@ -1,6 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
 
+interface PrismaQueryEvent {
+  query: string;
+  params: string;
+  duration: number;
+}
+
+interface PrismaErrorEvent {
+  message: string;
+  target?: string;
+}
+
 class DatabaseConnection {
   private static instance: PrismaClient;
 
@@ -28,7 +39,7 @@ class DatabaseConnection {
       });
 
       if (process.env['NODE_ENV'] === 'development') {
-        (DatabaseConnection.instance as any).$on('query', (e: any) => {
+        (DatabaseConnection.instance as any).$on('query', (e: PrismaQueryEvent) => {
           logger.debug('Database Query', {
             query: e.query,
             params: e.params,
@@ -37,7 +48,7 @@ class DatabaseConnection {
         });
       }
 
-      (DatabaseConnection.instance as any).$on('error', (e: any) => {
+      (DatabaseConnection.instance as any).$on('error', (e: PrismaErrorEvent) => {
         logger.error('Database Error', { error: e });
       });
 

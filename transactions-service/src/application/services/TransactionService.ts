@@ -2,7 +2,11 @@ import { Transaction, TransactionStatus } from '../../domain/entities/Transactio
 import { ITransactionService, CreateTransactionRequest } from '../../domain/interfaces/ITransactionService';
 import { ITransactionRepository } from '../../domain/interfaces/ITransactionRepository';
 import { ICustomerService } from '../../domain/interfaces/ICustomerService';
-import { ITransactionEventPublisher } from '../../domain/interfaces/IMessageBroker';
+import { 
+  ITransactionEventPublisher, 
+  TransactionCreatedEvent, 
+  TransactionProcessedEvent 
+} from '../../domain/interfaces/IMessageBroker';
 import { AppError } from '../../shared/errors/AppError';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -34,7 +38,7 @@ export class TransactionService implements ITransactionService {
 
     // Publicar evento de transação criada
     try {
-      const eventData: any = {
+      const eventData: TransactionCreatedEvent = {
         transactionId: transaction.id,
         fromUserId: transaction.fromUserId,
         toUserId: transaction.toUserId,
@@ -44,7 +48,7 @@ export class TransactionService implements ITransactionService {
       };
 
       if (transaction.description) {
-        eventData.description = transaction.description;
+        eventData['description'] = transaction.description;
       }
 
       if (transaction.externalReference) {
@@ -53,8 +57,10 @@ export class TransactionService implements ITransactionService {
 
       await this.transactionEventPublisher.publishTransactionCreated(transaction.id, eventData);
     } catch (error) {
-      // Log do erro mas não falha a transação
-      console.error('Failed to publish transaction created event:', error);
+      // Log do erro mas não falha a transação - silently ignore in test environment
+      if (process.env['NODE_ENV'] !== 'test') {
+        console.error('Failed to publish transaction created event:', error);
+      }
     }
 
     return transaction;
@@ -96,7 +102,7 @@ export class TransactionService implements ITransactionService {
 
     // Publicar evento de transação processada
     try {
-      const processedEventData: any = {
+      const processedEventData: TransactionProcessedEvent = {
         transactionId: transaction.id,
         status: TransactionStatus.PROCESSING,
         processedAt: new Date(),
@@ -108,7 +114,10 @@ export class TransactionService implements ITransactionService {
 
       await this.transactionEventPublisher.publishTransactionProcessed(transaction.id, processedEventData);
     } catch (error) {
-      console.error('Failed to publish transaction processed event:', error);
+      // Log do erro mas não falha a transação - silently ignore in test environment
+      if (process.env['NODE_ENV'] !== 'test') {
+        console.error('Failed to publish transaction processed event:', error);
+      }
     }
 
     return updatedTransaction;
@@ -117,12 +126,8 @@ export class TransactionService implements ITransactionService {
   async cancelTransaction(id: string): Promise<Transaction> {
     const transaction = await this.getTransactionById(id);
 
-    if (transaction.status === TransactionStatus.COMPLETED) {
-      throw new AppError('Cannot cancel completed transaction', 400);
-    }
-
-    if (transaction.status === TransactionStatus.CANCELLED) {
-      throw new AppError('Transaction already cancelled', 400);
+    if (transaction.status !== TransactionStatus.PENDING) {
+      throw new AppError('Transaction cannot be cancelled', 400);
     }
 
     return await this.transactionRepository.updateStatus(

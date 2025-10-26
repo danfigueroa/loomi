@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { logger } from '../config/logger';
+import { RequestWithCorrelationId } from './correlationId';
 
 interface ErrorWithStatus extends Error {
   status?: number;
@@ -8,7 +9,7 @@ interface ErrorWithStatus extends Error {
 
 export const errorHandler = (
   error: ErrorWithStatus,
-  req: Request,
+  req: RequestWithCorrelationId,
   res: Response,
   _next: NextFunction
 ): void => {
@@ -20,12 +21,12 @@ export const errorHandler = (
     stack: error.stack,
     url: req.url,
     method: req.method,
-    correlationId: (req as any).correlationId,
+    correlationId: req.correlationId,
   });
 
   res.status(status).json({
     error: message,
-    correlationId: (req as any).correlationId,
+    correlationId: req.correlationId,
     timestamp: new Date().toISOString(),
     ...(process.env['NODE_ENV'] === 'development' && { stack: error.stack }),
   });

@@ -70,8 +70,7 @@ describe('TransactionRepository', () => {
         externalReference: 'ext-ref-123',
         status: TransactionStatus.PENDING,
         createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
-        processedAt: null
+        updatedAt: new Date('2024-01-01')
       });
     });
 

@@ -18,7 +18,7 @@ class RedisConnection {
         logger.info('Redis connected successfully');
       });
 
-      RedisConnection.instance.on('error', (error: any) => {
+      RedisConnection.instance.on('error', (error: Error) => {
         logger.error('Redis connection error', { error: error.message });
       });
 

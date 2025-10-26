@@ -4,31 +4,7 @@ import { DatabaseConnection } from '../../config/database';
 import { RedisConnection } from '../../config/redis';
 import { logger } from '../../config/logger';
 import { IUserEventPublisher } from '../../domain/interfaces/IMessageBroker';
-
-interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  cpf?: string;
-  address?: string;
-}
-
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-interface UpdateUserRequest {
-  name?: string;
-  email?: string;
-  address?: string;
-  bankingDetails?: {
-    bankCode?: string;
-    agencyNumber?: string;
-    accountNumber?: string;
-    accountType?: string;
-  };
-}
+import { RegisterRequest, LoginRequest, UpdateUserRequest } from '../../types/user.types';
 
 export class UserService {
   private prisma = DatabaseConnection.getInstance();
@@ -48,52 +24,55 @@ export class UserService {
     });
 
     if (existingUser) {
-      throw new Error('Usuário já existe com este email');
+      throw new Error('Email já está em uso');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        cpf: cpf || null,
-        address: address || null
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        address: true,
-        isActive: true,
-        profilePicture: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
-
-    await this.redis.setEx(`user:${user.id}:password`, 86400, hashedPassword);
-
-    // Publicar evento de autenticação
     try {
-      await this.userEventPublisher.publishAuthenticationEvent(user.id, {
-        userId: user.id,
-        action: 'login',
-        timestamp: new Date(),
-        correlationId,
+      const user = await this.prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          cpf: cpf || null,
+          address: address || null,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          address: true,
+          isActive: true,
+          profilePicture: true,
+          createdAt: true,
+          updatedAt: true
+        }
       });
+
+      // Publicar evento de usuário registrado
+      try {
+        await this.userEventPublisher.publishUserRegistered(user.id, {
+          userId: user.id,
+          eventType: 'USER_REGISTERED',
+          timestamp: new Date().toISOString(),
+          data: {
+            name: user.name,
+            email: user.email,
+            isActive: user.isActive,
+            ...(user.address && { address: user.address }),
+          },
+        }, correlationId);
+      } catch (error) {
+        logger.error('Failed to publish user registered event:', error);
+      }
+
+      return user;
     } catch (error) {
-      logger.error('Failed to publish authentication event:', error);
+      logger.error('Error creating user:', error);
+      throw new Error('Erro interno do servidor');
     }
-
-    logger.info('User registered successfully', {
-      userId: user.id,
-      email: user.email,
-      correlationId
-    });
-
-    return user;
   }
 
   async login(data: LoginRequest, correlationId: string, ipAddress?: string, userAgent?: string) {

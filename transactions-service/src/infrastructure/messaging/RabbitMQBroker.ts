@@ -76,9 +76,9 @@ export class RabbitMQBroker implements IMessageBroker {
   /**
    * Publica uma mensagem
    */
-  async publish(queue: string, message: any, options: PublishOptions = {}): Promise<void> {
+  async publish(queue: string, message: Record<string, unknown>, options: PublishOptions = {}): Promise<void> {
     if (!this.isConnected()) {
-      throw new AppError('RabbitMQ not connected', 500);
+      throw new AppError('Not connected to RabbitMQ', 500);
     }
 
     try {
@@ -120,7 +120,7 @@ export class RabbitMQBroker implements IMessageBroker {
    */
   async consume(queue: string, handler: MessageHandler, options: ConsumeOptions = {}): Promise<void> {
     if (!this.isConnected()) {
-      throw new AppError('RabbitMQ not connected', 500);
+      throw new AppError('Not connected to RabbitMQ', 500);
     }
 
     try {
@@ -176,7 +176,7 @@ export class RabbitMQBroker implements IMessageBroker {
    * Verifica se está conectado
    */
   isConnected(): boolean {
-    return this.connection !== null && this.channel !== null && !this.connection.connection?.destroyed;
+    return this.connection !== null && this.channel !== null && !(this.connection as any).connection?.destroyed;
   }
 
   /**

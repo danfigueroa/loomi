@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { UserController } from '../controllers/userController';
 import { authenticateToken } from '../middlewares/auth';
 
@@ -47,7 +47,7 @@ export function createUserRoutes(userController: UserController): Router {
  *       409:
  *         description: Email já existe
  */
-router.post('/register', (req, res) => userController.register(req as any, res));
+router.post('/register', (req: Request, res: Response) => userController.register(req as any, res));
 
 /**
  * @swagger
@@ -78,7 +78,7 @@ router.post('/register', (req, res) => userController.register(req as any, res))
  *       401:
  *         description: Credenciais inválidas
  */
-router.post('/login', (req, res) => userController.login(req as any, res));
+router.post('/login', (req: Request, res: Response) => userController.login(req as any, res));
 
 /**
  * @swagger
@@ -96,7 +96,7 @@ router.post('/login', (req, res) => userController.login(req as any, res));
  *       404:
  *         description: Usuário não encontrado
  */
-router.get('/profile', authenticateToken as any, (req, res) => userController.getProfile(req as any, res));
+router.get('/profile', authenticateToken as any, (req: Request, res: Response) => userController.getProfile(req as any, res));
 
 /**
  * @swagger
@@ -134,7 +134,7 @@ router.get('/profile', authenticateToken as any, (req, res) => userController.ge
  *       409:
  *         description: Email já em uso
  */
-router.put('/profile', authenticateToken as any, (req, res) => userController.updateProfile(req as any, res));
+router.put('/profile', authenticateToken as any, (req: Request, res: Response) => userController.updateProfile(req as any, res));
 
 /**
  * @swagger
@@ -192,7 +192,7 @@ router.put('/profile', authenticateToken as any, (req, res) => userController.up
  *       409:
  *         description: Email já em uso
  */
-router.patch('/:userId', (req, res) => userController.updateUserById(req as any, res));
+router.patch('/:userId', (req: Request, res) => userController.updateUserById(req as any, res));
 
 /**
  * @swagger
@@ -228,7 +228,7 @@ router.patch('/:userId', (req, res) => userController.updateUserById(req as any,
  *       404:
  *         description: Usuário não encontrado
  */
-router.patch('/:userId/profile-picture', (req, res) => userController.updateProfilePicture(req as any, res));
+router.patch('/:userId/profile-picture', (req: Request, res) => userController.updateProfilePicture(req as any, res));
 
 /**
  * @swagger
@@ -250,7 +250,7 @@ router.patch('/:userId/profile-picture', (req, res) => userController.updateProf
  *       404:
  *         description: Usuário não encontrado
  */
-router.get('/:userId', (req, res) => userController.getUserById(req as any, res));
+router.get('/:userId', (req: Request, res) => userController.getUserById(req as any, res));
 
   return router;
 }

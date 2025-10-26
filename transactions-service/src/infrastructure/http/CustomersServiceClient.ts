@@ -5,12 +5,24 @@ interface User {
   name: string;
   email: string;
   isActive: boolean;
+  address?: string;
+  profilePicture?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface CircuitBreakerState {
   failures: number;
   lastFailureTime: number;
   state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+}
+
+interface ApiResponse {
+  success: boolean;
+  data?: {
+    user?: User;
+  };
+  message?: string;
 }
 
 export class CustomersServiceClient {
@@ -81,7 +93,7 @@ export class CustomersServiceClient {
     }
   }
 
-  private async makeRequest(endpoint: string, correlationId?: string): Promise<any> {
+  private async makeRequest(endpoint: string, correlationId?: string): Promise<User | null> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
@@ -110,25 +122,28 @@ export class CustomersServiceClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const responseData: any = await response.json();
+      const responseData = await response.json() as ApiResponse;
       
       // Extract user data from the API response structure
       if (responseData.success && responseData.data && responseData.data.user) {
         const user = responseData.data.user;
         // Ensure all required fields are present, including isActive
-        return {
+        const result: User = {
           id: user.id,
           name: user.name,
           email: user.email,
           isActive: user.isActive !== undefined ? user.isActive : true, // Default to true if not present
-          address: user.address || '',
-          profilePicture: user.profilePicture || null,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
         };
+        
+        if (user.address !== undefined) result.address = user.address;
+        if (user.profilePicture !== undefined) result.profilePicture = user.profilePicture;
+        if (user.createdAt !== undefined) result.createdAt = user.createdAt;
+        if (user.updatedAt !== undefined) result.updatedAt = user.updatedAt;
+        
+        return result;
       }
       
-      return responseData;
+      return null;
     } catch (error) {
       clearTimeout(timeoutId);
       
