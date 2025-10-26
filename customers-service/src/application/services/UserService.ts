@@ -51,7 +51,6 @@ export class UserService {
         }
       });
 
-      // Publicar evento de usuário registrado
       try {
         await this.userEventPublisher.publishUserRegistered(user.id, {
           userId: user.id,
@@ -122,7 +121,6 @@ export class UserService {
 
     await this.redis.setEx(`user:${user.id}:token`, 86400, token);
 
-    // Publicar evento de autenticação
     try {
       await this.userEventPublisher.publishAuthenticationEvent(user.id, {
         userId: user.id,
@@ -229,8 +227,7 @@ export class UserService {
       if (bankingDetails.accountType) updatedFields.push('accountType');
     }
 
-    // Publicar evento de dados bancários atualizados se houve mudanças
-    if (updatedFields.length > 0) {
+   if (updatedFields.length > 0) {
       try {
         await this.userEventPublisher.publishBankingDataUpdated(userId, {
           userId,

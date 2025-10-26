@@ -124,10 +124,8 @@ export class CustomersServiceClient {
 
       const responseData = await response.json() as ApiResponse;
       
-      // Extract user data from the API response structure
       if (responseData.success && responseData.data && responseData.data.user) {
         const user = responseData.data.user;
-        // Ensure all required fields are present, including isActive
         const result: User = {
           id: user.id,
           name: user.name,

@@ -50,6 +50,7 @@ export class RabbitMQBroker implements IMessageBroker {
       logger.error('Failed to connect to RabbitMQ', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw new AppError('Failed to connect to RabbitMQ', 500);
     }
+    return Promise.resolve();
   }
 
   /**

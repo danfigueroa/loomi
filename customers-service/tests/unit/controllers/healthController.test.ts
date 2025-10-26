@@ -46,7 +46,7 @@ describe('HealthController', () => {
       // Mock the healthController's messageBroker property
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith(
@@ -77,7 +77,7 @@ describe('HealthController', () => {
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(503);
       expect(mockJson).toHaveBeenCalledWith(
@@ -107,7 +107,7 @@ describe('HealthController', () => {
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(503);
       expect(mockJson).toHaveBeenCalledWith(
@@ -137,7 +137,7 @@ describe('HealthController', () => {
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(503);
       expect(mockJson).toHaveBeenCalledWith(
@@ -161,7 +161,7 @@ describe('HealthController', () => {
       };
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(503);
       expect(mockJson).toHaveBeenCalledWith(
@@ -191,7 +191,7 @@ describe('HealthController', () => {
       (RedisConnection.getInstance as jest.Mock).mockReturnValue(mockRedis);
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(logger.info).toHaveBeenCalledWith(
         'Health check completed',
@@ -216,7 +216,7 @@ describe('HealthController', () => {
       };
       (healthController as any).messageBroker = mockMessageBroker;
 
-      await healthController.check(mockRequest as Request, mockResponse as Response);
+      await healthController.check(mockRequest as any, mockResponse as Response);
 
       expect(logger.error).toHaveBeenCalledWith(
         'Health check failed',

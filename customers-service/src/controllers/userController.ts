@@ -74,7 +74,6 @@ class UserController {
 
       await this.redis.setEx(`user:${user.id}:password`, 86400, hashedPassword);
 
-      // Publicar evento de autenticação
       try {
         await this.userEventPublisher.publishAuthenticationEvent(user.id, {
           userId: user.id,
@@ -635,5 +634,5 @@ class UserController {
   }
 }
 
-// Export será feito no index.ts após injeção de dependências
+
 export { UserController };

@@ -14,7 +14,6 @@ export class RabbitMQBroker implements IMessageBroker {
   private connected = false;
 
   constructor() {
-    // Implementação simplificada
   }
 
   /**
@@ -24,7 +23,6 @@ export class RabbitMQBroker implements IMessageBroker {
     try {
       logger.info('Connecting to RabbitMQ...', { url: this.getMaskedUrl() });
       
-      // Simular conexão para evitar problemas de compilação
       this.connected = true;
       
       logger.info('Successfully connected to RabbitMQ');

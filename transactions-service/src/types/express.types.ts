@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-// JWT Payload interface matching auth middleware
+
 interface JwtPayload {
   userId: string;
   email: string;

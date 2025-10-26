@@ -1,6 +1,6 @@
 import { TransactionStatus, TransactionType } from '../domain/entities/Transaction';
 
-// Request types
+
 export interface CreateTransactionRequest {
   fromUserId: string;
   toUserId: string;
@@ -23,7 +23,7 @@ export interface PaginationQuery {
   limit?: number;
 }
 
-// Response types
+
 export interface TransactionResponse {
   id: string;
   fromUserId: string;
@@ -62,13 +62,13 @@ export interface GetTransactionsResponse {
   correlationId?: string;
 }
 
-// Service types
+
 export interface TransactionServiceResult {
   transactions: TransactionResponse[];
   total: number;
 }
 
-// Event types
+
 export interface TransactionEventData {
   transactionId: string;
   fromUserId: string;

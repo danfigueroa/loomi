@@ -1,4 +1,3 @@
-// Message broker types
 export interface PublishOptions {
   persistent?: boolean;
   correlationId?: string;

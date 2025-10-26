@@ -1,11 +1,17 @@
-import { Transaction, TransactionStatus } from '../../domain/entities/Transaction';
-import { ITransactionService, CreateTransactionRequest } from '../../domain/interfaces/ITransactionService';
+import {
+  Transaction,
+  TransactionStatus,
+} from '../../domain/entities/Transaction';
+import {
+  ITransactionService,
+  CreateTransactionRequest,
+} from '../../domain/interfaces/ITransactionService';
 import { ITransactionRepository } from '../../domain/interfaces/ITransactionRepository';
 import { ICustomerService } from '../../domain/interfaces/ICustomerService';
-import { 
-  ITransactionEventPublisher, 
-  TransactionCreatedEvent, 
-  TransactionProcessedEvent 
+import {
+  ITransactionEventPublisher,
+  TransactionCreatedEvent,
+  TransactionProcessedEvent,
 } from '../../domain/interfaces/IMessageBroker';
 import { AppError } from '../../shared/errors/AppError';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +23,9 @@ export class TransactionService implements ITransactionService {
     private transactionEventPublisher: ITransactionEventPublisher
   ) {}
 
-  async createTransaction(data: CreateTransactionRequest): Promise<Transaction> {
+  async createTransaction(
+    data: CreateTransactionRequest
+  ): Promise<Transaction> {
     if (data.amount <= 0) {
       throw new AppError('Amount must be greater than zero', 400);
     }
@@ -34,9 +42,8 @@ export class TransactionService implements ITransactionService {
       externalReference: uuidv4(),
     };
 
-    const transaction = await this.transactionRepository.create(transactionData);
-
-    // Publicar evento de transação criada
+    const transaction =
+      await this.transactionRepository.create(transactionData);
     try {
       const eventData: TransactionCreatedEvent = {
         transactionId: transaction.id,
@@ -55,7 +62,10 @@ export class TransactionService implements ITransactionService {
         eventData.correlationId = transaction.externalReference;
       }
 
-      await this.transactionEventPublisher.publishTransactionCreated(transaction.id, eventData);
+      await this.transactionEventPublisher.publishTransactionCreated(
+        transaction.id,
+        eventData
+      );
     } catch (error) {
       // Log do erro mas não falha a transação - silently ignore in test environment
       if (process.env['NODE_ENV'] !== 'test') {
@@ -68,7 +78,7 @@ export class TransactionService implements ITransactionService {
 
   async getTransactionById(id: string): Promise<Transaction> {
     const transaction = await this.transactionRepository.findById(id);
-    
+
     if (!transaction) {
       throw new AppError('Transaction not found', 404);
     }
@@ -76,12 +86,16 @@ export class TransactionService implements ITransactionService {
     return transaction;
   }
 
-  async getTransactionsByUserId(userId: string, page = 1, limit = 10): Promise<{ transactions: Transaction[], total: number }> {
+  async getTransactionsByUserId(
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<{ transactions: Transaction[]; total: number }> {
     await this.customerService.validateUser(userId);
-    
+
     const [transactions, total] = await Promise.all([
       this.transactionRepository.findByUserId(userId, page, limit),
-      this.transactionRepository.countByUserId(userId)
+      this.transactionRepository.countByUserId(userId),
     ]);
 
     return { transactions, total };
@@ -112,7 +126,10 @@ export class TransactionService implements ITransactionService {
         processedEventData.correlationId = transaction.externalReference;
       }
 
-      await this.transactionEventPublisher.publishTransactionProcessed(transaction.id, processedEventData);
+      await this.transactionEventPublisher.publishTransactionProcessed(
+        transaction.id,
+        processedEventData
+      );
     } catch (error) {
       // Log do erro mas não falha a transação - silently ignore in test environment
       if (process.env['NODE_ENV'] !== 'test') {

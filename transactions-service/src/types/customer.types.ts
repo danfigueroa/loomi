@@ -1,4 +1,3 @@
-// Customer service types
 export interface CustomerData {
   id: string;
   name: string;
@@ -24,7 +23,7 @@ export interface CustomerServiceResponse {
   error?: string;
 }
 
-// HTTP Client types
+
 export interface HttpClientResponse<T = any> {
   data: T;
   status: number;

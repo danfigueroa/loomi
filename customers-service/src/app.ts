@@ -40,7 +40,6 @@ app.use(requestLogger as any);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', healthController.check);
-// User routes serão configuradas no index.ts com injeção de dependências
 
 app.use(errorHandler as any);
 

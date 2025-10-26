@@ -7,6 +7,7 @@ import { RabbitMQBroker } from './infrastructure/messaging/RabbitMQBroker';
 import { UserEventPublisher } from './infrastructure/messaging/UserEventPublisher';
 
 import { UserController } from './controllers/userController';
+import { HealthController } from './controllers/healthController';
 import { createUserRoutes } from './routes/userRoutes';
 
 const PORT = process.env['PORT'] || 3001;
@@ -21,20 +22,11 @@ const startServer = async (): Promise<void> => {
     await RedisConnection.getInstance().ping();
     logger.info('Redis connected successfully');
 
-    // Inicializar RabbitMQ
-    const messageBroker = new RabbitMQBroker();
-    await messageBroker.connect();
-    logger.info('RabbitMQ connected successfully');
+    const rabbitMQ = new RabbitMQBroker();
+    await rabbitMQ.connect();
 
-    // Injeção de dependências
-    const userEventPublisher = new UserEventPublisher(messageBroker);
-    const userController = new UserController(userEventPublisher);
-
-    // Configurar health check com RabbitMQ
-    const { healthController } = await import('./controllers/healthController');
-    healthController.setMessageBroker(messageBroker);
-
-    // Configurar rotas com dependências injetadas
+    const userEventPublisher = new UserEventPublisher(rabbitMQ);
+    const healthController = new HealthController(rabbitMQ);
     const userRoutes = createUserRoutes(userController);
     app.use('/api/users', userRoutes);
 

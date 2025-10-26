@@ -19,24 +19,11 @@ const startServer = async (): Promise<void> => {
     await RedisConnection.getInstance().ping();
     logger.info('Redis connected successfully');
 
-    // Inicializar RabbitMQ
-    const messageBroker = new RabbitMQBroker();
-    await messageBroker.connect();
-    logger.info('RabbitMQ connected successfully');
+    const rabbitMQ = new RabbitMQBroker();
+    await rabbitMQ.connect();
 
-    // Injeção de dependências
-    const transactionEventPublisher = new TransactionEventPublisher(messageBroker);
-    const transactionRepository = new TransactionRepository(DatabaseConnection.getInstance());
-    const customerService = new CustomerService();
-    const transactionService = new TransactionService(
-      transactionRepository,
-      customerService,
-      transactionEventPublisher
-    );
-
-    // Configurar health check com RabbitMQ
-    const { healthController } = await import('./controllers/healthController');
-    healthController.setMessageBroker(messageBroker);
+    const transactionEventPublisher = new TransactionEventPublisher(rabbitMQ);
+    const healthController = new HealthController(rabbitMQ);
 
     // Disponibilizar o service globalmente para os controllers
     (global as any).transactionService = transactionService;
