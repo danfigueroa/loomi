@@ -47,6 +47,8 @@ jobs:
       run: |
         cd ${{ matrix.service }}
         npm run db:generate
+      env:
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test_db"
 
     - name: Run linting
       run: |
@@ -57,11 +59,17 @@ jobs:
       run: |
         cd ${{ matrix.service }}
         npm test
+      env:
+        NODE_ENV: test
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test_db"
 
     - name: Run tests with coverage
       run: |
         cd ${{ matrix.service }}
-        npm run test:coverage
+        npx jest --coverage
+      env:
+        NODE_ENV: test
+        DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test_db"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -69,6 +77,7 @@ jobs:
         file: ./${{ matrix.service }}/coverage/lcov.info
         flags: ${{ matrix.service }}
         name: ${{ matrix.service }}-coverage
+      continue-on-error: true
 
     - name: Build application
       run: |
