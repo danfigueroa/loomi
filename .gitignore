@@ -61,7 +61,7 @@ coverage/
 # DEVELOPMENT TOOLS
 # ===================================
 # Trae AI specific files
-.trae
+.trae/
 
 # Optional REPL history
 .node_repl_history
