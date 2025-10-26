@@ -34,14 +34,14 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(correlationId as express.RequestHandler);
-app.use(requestLogger);
+app.use(correlationId as any);
+app.use(requestLogger as any);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', healthController.check);
 // User routes serão configuradas no index.ts com injeção de dependências
 
-app.use(errorHandler);
+app.use(errorHandler as any);
 
 export { app };

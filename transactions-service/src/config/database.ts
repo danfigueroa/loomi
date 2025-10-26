@@ -27,6 +27,7 @@ class DatabaseConnection {
         ],
       });
 
+      // Use type assertion for Prisma event handlers
       (DatabaseConnection.instance as any).$on('query', (e: any) => {
         logger.debug('Database Query', {
           query: e.query,
@@ -48,7 +49,7 @@ class DatabaseConnection {
       });
 
       DatabaseConnection.instance.$connect().catch((error) => {
-        logger.error('Failed to connect to database', { error: error.message });
+        logger.error('Failed to connect to database', { error: error instanceof Error ? error.message : 'Unknown error' });
       });
     }
 
@@ -62,5 +63,5 @@ class DatabaseConnection {
   }
 }
 
-export const prisma = process.env['NODE_ENV'] === 'test' ? null as any : DatabaseConnection.getInstance();
+export const prisma = process.env['NODE_ENV'] === 'test' ? null : DatabaseConnection.getInstance();
 export { DatabaseConnection };

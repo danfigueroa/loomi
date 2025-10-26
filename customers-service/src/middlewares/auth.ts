@@ -1,16 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { logger } from '../config/logger';
-import { RequestWithCorrelationId } from './correlationId';
-
-interface JwtPayload {
-  userId: string;
-  email: string;
-}
-
-interface AuthenticatedRequest extends RequestWithCorrelationId {
-  user?: JwtPayload;
-}
+import { JwtPayload, AuthenticatedRequest } from '../types/auth.types';
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];

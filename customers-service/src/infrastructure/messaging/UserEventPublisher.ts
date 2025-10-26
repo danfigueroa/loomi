@@ -4,6 +4,7 @@ import {
   AuthenticationEvent
 } from '../../domain/interfaces/IMessageBroker';
 import { IMessageBroker } from '../../domain/interfaces/IMessageBroker';
+import { UserEventPayload, MessagePayload } from '../../types/messaging.types';
 import { rabbitmqConfig } from '../../config/rabbitmq';
 import { logger } from '../../config/logger';
 
@@ -15,36 +16,71 @@ export class UserEventPublisher implements IUserEventPublisher {
   constructor(private readonly messageBroker: IMessageBroker) {}
 
   /**
-   * Publica evento de dados bancários atualizados
+   * Publica evento de usuário registrado
    */
-  async publishBankingDataUpdated(userId: string, data: BankingDataUpdatedEvent): Promise<void> {
+  async publishUserRegistered(userId: string, data: UserEventPayload, correlationId?: string): Promise<void> {
     try {
       await this.messageBroker.publish(
-        rabbitmqConfig.queues.bankingDataUpdated,
-        {
-          eventType: 'BankingDataUpdated',
-          userId,
-          timestamp: new Date().toISOString(),
-          data,
-        },
-        {
-          ...(data.correlationId && { correlationId: data.correlationId }),
+        rabbitmqConfig.queues.userRegistered,
+        data,
+        correlationId ? {
+          correlationId,
+          persistent: true,
+        } : {
           persistent: true,
         }
       );
 
-      logger.info('Banking data updated event published', { 
-        userId, 
-        correlationId: data.correlationId 
+      logger.info('User registered event published successfully', {
+        userId,
+        correlationId,
       });
-
     } catch (error) {
-      logger.error('Failed to publish banking data updated event', { 
-        userId, 
+      logger.error('Failed to publish user registered event', {
+        userId,
+        correlationId,
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: data.correlationId 
       });
-      throw new Error('Failed to publish banking data updated event');
+      throw error;
+    }
+  }
+
+  /**
+   * Publica evento de dados bancários atualizados
+   */
+  async publishBankingDataUpdated(userId: string, data: BankingDataUpdatedEvent): Promise<void> {
+    try {
+      const eventPayload: MessagePayload = {
+        eventType: 'BankingDataUpdated',
+        userId,
+        timestamp: new Date().toISOString(),
+        updatedFields: data.updatedFields,
+        updatedAt: data.updatedAt.toISOString(),
+        correlationId: data.correlationId || '',
+      };
+
+      await this.messageBroker.publish(
+        rabbitmqConfig.queues.bankingDataUpdated,
+        eventPayload,
+        data.correlationId ? {
+          correlationId: data.correlationId,
+          persistent: true,
+        } : {
+          persistent: true,
+        }
+      );
+
+      logger.info('Banking data updated event published successfully', {
+        userId,
+        correlationId: data.correlationId,
+      });
+    } catch (error) {
+      logger.error('Failed to publish banking data updated event', {
+        userId,
+        correlationId: data.correlationId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
     }
   }
 
@@ -53,33 +89,40 @@ export class UserEventPublisher implements IUserEventPublisher {
    */
   async publishAuthenticationEvent(userId: string, data: AuthenticationEvent): Promise<void> {
     try {
+      const eventPayload: MessagePayload = {
+        eventType: 'Authentication',
+        userId,
+        timestamp: new Date().toISOString(),
+        action: data.action,
+        ipAddress: data.ipAddress || '',
+        userAgent: data.userAgent || '',
+        correlationId: data.correlationId || '',
+      };
+
       await this.messageBroker.publish(
-        rabbitmqConfig.queues.authenticationEvents,
-        {
-          eventType: 'AuthenticationEvent',
-          userId,
-          timestamp: new Date().toISOString(),
-          data,
-        },
-        {
-          ...(data.correlationId && { correlationId: data.correlationId }),
+        rabbitmqConfig.queues.authentication,
+        eventPayload,
+        data.correlationId ? {
+          correlationId: data.correlationId,
+          persistent: true,
+        } : {
           persistent: true,
         }
       );
 
-      logger.info('Authentication event published', { 
-        userId, 
+      logger.info('Authentication event published successfully', {
+        userId,
         action: data.action,
-        correlationId: data.correlationId 
+        correlationId: data.correlationId,
       });
-
     } catch (error) {
-      logger.error('Failed to publish authentication event', { 
-        userId, 
+      logger.error('Failed to publish authentication event', {
+        userId,
+        action: data.action,
+        correlationId: data.correlationId,
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: data.correlationId 
       });
-      throw new Error('Failed to publish authentication event');
+      throw error;
     }
   }
 }

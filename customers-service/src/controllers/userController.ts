@@ -6,42 +6,14 @@ import { RedisConnection } from '../config/redis';
 import { logger } from '../config/logger';
 import { RequestWithCorrelationId } from '../middlewares/correlationId';
 import { IUserEventPublisher } from '../domain/interfaces/IMessageBroker';
-
-interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  cpf?: string;
-  address?: string;
-}
-
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-interface UpdateProfileRequest {
-  name?: string;
-  email?: string;
-  address?: string;
-  profilePicture?: string;
-}
-
-interface UpdateUserRequest {
-  name?: string;
-  email?: string;
-  address?: string;
-  bankingDetails?: {
-    bankCode?: string;
-    agencyNumber?: string;
-    accountNumber?: string;
-    accountType?: string;
-  };
-}
-
-interface UpdateProfilePictureRequest {
-  profilePicture: string;
-}
+import { 
+  RegisterRequest, 
+  LoginRequest, 
+  UpdateProfileRequest, 
+  UpdateUserRequest, 
+  UpdateProfilePictureRequest
+} from '../types/user.types';
+import { AuthenticatedRequest } from '../types/auth.types';
 
 class UserController {
   private prisma = DatabaseConnection.getInstance();
@@ -233,9 +205,9 @@ class UserController {
     }
   }
 
-  async getProfile(req: RequestWithCorrelationId, res: Response): Promise<void> {
+  async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
 
       if (!userId) {
         res.status(401).json({
@@ -307,9 +279,9 @@ class UserController {
     }
   }
 
-  async updateProfile(req: RequestWithCorrelationId, res: Response): Promise<void> {
+  async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
       const { name, email, address, profilePicture }: UpdateProfileRequest = req.body;
 
       if (!userId) {

@@ -17,7 +17,8 @@ export const requestLogger = (
   });
 
   const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: any): Response {
+  // Temporarily use any for Express compatibility
+  res.end = function(chunk?: unknown, encoding?: unknown): Response {
     const duration = Date.now() - start;
     
     logger.info('Request completed', {
@@ -28,7 +29,7 @@ export const requestLogger = (
       correlationId: req.correlationId,
     });
 
-    return originalEnd.call(this, chunk, encoding);
+    return originalEnd.call(this, chunk as any, encoding as any);
   };
 
   next();

@@ -1,19 +1,19 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { logger } from '../config/logger';
+import { RequestWithCorrelationId } from './correlationId';
 
-export const requestLogger = (req: Request, res: Response, next: NextFunction): void => {
+export const requestLogger = (req: RequestWithCorrelationId, res: Response, next: NextFunction): void => {
   const start = Date.now();
-  const correlationId = (req as any).correlationId;
 
   logger.info('Incoming request', {
     method: req.method,
     url: req.url,
     userAgent: req.get('User-Agent'),
-    correlationId,
+    correlationId: req.correlationId,
   });
 
   const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: any): Response {
+  (res as any).end = function(chunk?: any, encoding?: any): Response {
     const duration = Date.now() - start;
     
     logger.info('Request completed', {
@@ -21,7 +21,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
       url: req.url,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
-      correlationId,
+      correlationId: req.correlationId,
     });
 
     return originalEnd.call(this, chunk, encoding);

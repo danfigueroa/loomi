@@ -7,8 +7,9 @@ import { logger } from './logger';
 export interface RabbitMQConfig {
   url: string;
   queues: {
+    userRegistered: string;
     bankingDataUpdated: string;
-    authenticationEvents: string;
+    authentication: string;
   };
   exchanges: {
     users: string;
@@ -26,8 +27,9 @@ export interface RabbitMQConfig {
 export const rabbitmqConfig: RabbitMQConfig = {
   url: process.env['RABBITMQ_URL'] || 'amqp://rabbitmq:rabbitmq123@localhost:5672',
   queues: {
+    userRegistered: 'user.registered',
     bankingDataUpdated: 'user.banking-data-updated',
-    authenticationEvents: 'user.authentication-events',
+    authentication: 'user.authentication',
   },
   exchanges: {
     users: 'users.exchange',
@@ -44,13 +46,11 @@ export const rabbitmqConfig: RabbitMQConfig = {
  */
 export function validateRabbitMQConfig(): void {
   if (!rabbitmqConfig.url) {
-    logger.error('RABBITMQ_URL environment variable is required');
-    throw new Error('RABBITMQ_URL environment variable is required');
+    throw new Error('RABBITMQ_URL is required');
   }
 
-  logger.info('RabbitMQ configuration validated successfully', {
-    url: rabbitmqConfig.url.replace(/\/\/.*@/, '//***:***@'), // Oculta credenciais no log
+  logger.info('RabbitMQ configuration validated', {
+    url: rabbitmqConfig.url.replace(/\/\/.*@/, '//***:***@'), // Hide credentials in logs
     queues: rabbitmqConfig.queues,
-    exchanges: rabbitmqConfig.exchanges,
   });
 }

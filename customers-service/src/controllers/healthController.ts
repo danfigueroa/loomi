@@ -39,6 +39,13 @@ class HealthController {
       const rabbitmqHealthy = rabbitmqStatus.status === 'fulfilled';
       const isHealthy = dbHealthy && redisHealthy && rabbitmqHealthy;
 
+      // Log detailed status for debugging
+      logger.info('Health check details', {
+        database: { status: databaseStatus.status, reason: databaseStatus.status === 'rejected' ? databaseStatus.reason : null },
+        redis: { status: redisStatus.status, reason: redisStatus.status === 'rejected' ? redisStatus.reason : null },
+        rabbitmq: { status: rabbitmqStatus.status, reason: rabbitmqStatus.status === 'rejected' ? rabbitmqStatus.reason : null }
+      });
+
       const healthStatus: HealthStatus = {
         status: isHealthy ? 'healthy' : 'unhealthy',
         timestamp: new Date().toISOString(),

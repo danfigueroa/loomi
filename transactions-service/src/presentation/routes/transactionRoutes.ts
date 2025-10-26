@@ -1,15 +1,22 @@
-import { Router } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { TransactionController } from '../controllers/TransactionController';
 import { TransactionService } from '../../application/services/TransactionService';
 import { TransactionRepository } from '../../infrastructure/repositories/TransactionRepository';
 import { CustomerService } from '../../infrastructure/services/CustomerService';
-import { TransactionEventPublisher } from '../../infrastructure/messaging/TransactionEventPublisher';
 import { RabbitMQBroker } from '../../infrastructure/messaging/RabbitMQBroker';
+import { TransactionEventPublisher } from '../../infrastructure/messaging/TransactionEventPublisher';
 import { prisma } from '../../config/database';
 import { authenticateToken } from '../../shared/middlewares/auth';
 import { createRateLimiter } from '../../shared/middlewares/rateLimiter';
+import { AppError } from '../../shared/errors/AppError';
+import { RequestWithCorrelationId } from '../../middlewares/correlationId';
 
 const router = Router();
+
+// Verificar se prisma não é null
+if (!prisma) {
+  throw new AppError('Database connection not available', 500);
+}
 
 const transactionRepository = new TransactionRepository(prisma);
 const customerService = new CustomerService();
@@ -26,7 +33,7 @@ router.post(
   '/',
   transactionRateLimit,
   authenticateToken,
-  async (req: any, res: any, next: any) => {
+  async (req: RequestWithCorrelationId, res: Response, next: NextFunction) => {
     try {
       await transactionController.createTransaction(req, res);
     } catch (error) {
@@ -38,7 +45,7 @@ router.post(
 router.get(
   '/:id',
   authenticateToken,
-  async (req: any, res: any, next: any) => {
+  async (req: RequestWithCorrelationId, res: Response, next: NextFunction) => {
     try {
       await transactionController.getTransactionById(req, res);
     } catch (error) {
@@ -50,7 +57,7 @@ router.get(
 router.get(
   '/user/:userId',
   authenticateToken,
-  async (req: any, res: any, next: any) => {
+  async (req: RequestWithCorrelationId, res: Response, next: NextFunction) => {
     try {
       await transactionController.getTransactionsByUserId(req, res);
     } catch (error) {

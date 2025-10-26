@@ -1,9 +1,8 @@
 import { 
   IMessageBroker, 
-  MessageHandler, 
-  PublishOptions, 
   ConsumeOptions 
 } from '../../domain/interfaces/IMessageBroker';
+import { MessageHandler, PublishOptions, MessagePayload } from '../../types/messaging.types';
 import { rabbitmqConfig } from '../../config/rabbitmq';
 import { logger } from '../../config/logger';
 
@@ -54,7 +53,7 @@ export class RabbitMQBroker implements IMessageBroker {
   /**
    * Publica uma mensagem
    */
-  async publish(queue: string, message: any, options: PublishOptions = {}): Promise<void> {
+  async publish(queue: string, message: MessagePayload, options: PublishOptions = {}): Promise<void> {
     if (!this.isConnected()) {
       throw new Error('RabbitMQ not connected');
     }

@@ -3,6 +3,10 @@ import { AppError } from '../../shared/errors/AppError';
 import { CustomersServiceClient } from '../http/CustomersServiceClient';
 import { logger } from '../../config/logger';
 
+interface ServiceError extends Error {
+  statusCode?: number;
+}
+
 export class CustomerService implements ICustomerService {
   private customersClient: CustomersServiceClient;
 
@@ -32,22 +36,23 @@ export class CustomerService implements ICustomerService {
         email: user.email,
         address: '',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const serviceError = error as ServiceError;
       logger.error('User validation failed', { 
         userId, 
         correlationId, 
-        error: error.message 
+        error: serviceError.message 
       });
 
-      if (error instanceof AppError) {
-        throw error;
+      if (serviceError instanceof AppError) {
+        throw serviceError;
       }
 
-      if (error.message.includes('Circuit breaker is OPEN')) {
+      if (serviceError.message?.includes('Circuit breaker is OPEN')) {
         throw new AppError('Customer service temporarily unavailable', 503);
       }
 
-      if (error.message.includes('timeout')) {
+      if (serviceError.message?.includes('timeout')) {
         throw new AppError('Customer service timeout', 503);
       }
 
@@ -58,11 +63,12 @@ export class CustomerService implements ICustomerService {
   async getUserById(userId: string, correlationId?: string): Promise<Customer | null> {
     try {
       return await this.validateUser(userId, correlationId);
-    } catch (error: any) {
-      if (error.statusCode === 404) {
+    } catch (error: unknown) {
+      const serviceError = error as ServiceError;
+      if (serviceError.statusCode === 404) {
         return null;
       }
-      throw error;
+      throw serviceError;
     }
   }
 }
