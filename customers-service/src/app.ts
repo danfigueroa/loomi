@@ -7,7 +7,6 @@ import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestLogger } from './middlewares/requestLogger';
 import { correlationId } from './middlewares/correlationId';
-import { healthController } from './controllers/healthController';
 import { swaggerSpec } from './config/swagger';
 
 const app = express();
@@ -38,8 +37,6 @@ app.use(correlationId as any);
 app.use(requestLogger as any);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-app.get('/health', healthController.check);
 
 app.use(errorHandler as any);
 

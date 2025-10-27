@@ -18,10 +18,34 @@ interface HealthStatus {
 }
 
 class HealthController {
+  private static instance: HealthController;
   private messageBroker?: IMessageBroker;
 
+  constructor() {
+    if (HealthController.instance) {
+      return HealthController.instance;
+    }
+    HealthController.instance = this;
+  }
+
+  static getInstance(): HealthController {
+    if (!HealthController.instance) {
+      HealthController.instance = new HealthController();
+    }
+    return HealthController.instance;
+  }
+
   setMessageBroker(messageBroker: IMessageBroker): void {
+    logger.info('setMessageBroker called with:', { 
+      messageBroker: !!messageBroker, 
+      type: typeof messageBroker,
+      isConnected: messageBroker ? messageBroker.isConnected() : 'N/A'
+    });
     this.messageBroker = messageBroker;
+    logger.info('messageBroker set, current state:', { 
+      hasMessageBroker: !!this.messageBroker,
+      type: typeof this.messageBroker
+    });
   }
 
   async check(_req: Request, res: Response): Promise<void> {
@@ -88,4 +112,4 @@ class HealthController {
   }
 }
 
-export const healthController = new HealthController();
+export const healthController = HealthController.getInstance();

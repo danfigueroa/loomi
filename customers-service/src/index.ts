@@ -12,35 +12,94 @@ import { createUserRoutes } from './routes/userRoutes';
 
 const PORT = process.env['PORT'] || 3001;
 
-const startServer = async (): Promise<void> => {
+async function startServer() {
   try {
-    logger.info('Starting customers service...');
-    
-    await DatabaseConnection.getInstance().$connect();
-    logger.info('Database connected successfully');
+    logger.info('🚀 Iniciando customers-service...');
+    logger.info('Environment variables:', {
+      NODE_ENV: process.env['NODE_ENV'],
+      PORT: process.env['PORT'],
+      DATABASE_URL: process.env['DATABASE_URL'] ? 'SET' : 'NOT SET',
+      REDIS_URL: process.env['REDIS_URL'] ? 'SET' : 'NOT SET',
+      RABBITMQ_URL: process.env['RABBITMQ_URL'] ? 'SET' : 'NOT SET'
+    });
 
-    await RedisConnection.getInstance().ping();
-    logger.info('Redis connected successfully');
+    // Connect to database
+    try {
+      logger.info('📊 Conectando ao banco de dados...');
+      await DatabaseConnection.connect();
+      logger.info('✅ Database conectado com sucesso');
+    } catch (error) {
+      logger.error('❌ Falha ao conectar ao banco de dados:', error);
+      throw error;
+    }
 
-    const rabbitMQ = new RabbitMQBroker();
-    await rabbitMQ.connect();
+    // Connect to Redis
+    try {
+      logger.info('🔴 Conectando ao Redis...');
+      await RedisConnection.connect();
+      logger.info('✅ Redis conectado com sucesso');
+    } catch (error) {
+      logger.error('❌ Falha ao conectar ao Redis:', error);
+      throw error;
+    }
 
-    const userEventPublisher = new UserEventPublisher(rabbitMQ);
+    // Connect to RabbitMQ
+    const messageBroker = new RabbitMQBroker();
+    try {
+      logger.info('🐰 Conectando ao RabbitMQ...');
+      await messageBroker.connect();
+      logger.info('✅ RabbitMQ conectado com sucesso');
+    } catch (error) {
+      logger.error('❌ Falha ao conectar ao RabbitMQ:', error);
+      throw error;
+    }
+
+    // Initialize routes
+    logger.info('🛣️ Inicializando rotas...');
+    const userEventPublisher = new UserEventPublisher(messageBroker);
     const userController = new UserController(userEventPublisher);
-    healthController.setMessageBroker(rabbitMQ);
+    logger.info('Setting messageBroker in healthController...');
+    healthController.setMessageBroker(messageBroker);
+    logger.info('MessageBroker set successfully in healthController');
+    
+    // Add health route
+    app.get('/health', healthController.check.bind(healthController));
+    
     const userRoutes = createUserRoutes(userController);
     app.use('/api/users', userRoutes);
+    logger.info('✅ Rotas inicializadas com sucesso');
 
-    app.listen(PORT, () => {
-      logger.info(`🚀 Customers service running on port ${PORT}`);
-      logger.info(`📊 Environment: ${process.env['NODE_ENV'] || 'development'}`);
-      logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+    const server = app.listen(PORT, () => {
+      logger.info(`🎉 Servidor rodando na porta ${PORT}`);
+      logger.info('🏥 Health check disponível em /health');
     });
+
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+      logger.info('SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        DatabaseConnection.disconnect();
+        RedisConnection.disconnect();
+        messageBroker.disconnect();
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', async () => {
+      logger.info('SIGINT received, shutting down gracefully');
+      server.close(() => {
+        DatabaseConnection.disconnect();
+        RedisConnection.disconnect();
+        messageBroker.disconnect();
+        process.exit(0);
+      });
+    });
+
   } catch (error) {
-    logger.error('Failed to start server', { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.error('💥 Falha crítica ao iniciar o servidor:', error);
     process.exit(1);
   }
-};
+}
 
 const gracefulShutdown = async (signal: string): Promise<void> => {
   logger.info(`Received ${signal}, shutting down gracefully`);

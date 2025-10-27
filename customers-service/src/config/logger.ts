@@ -11,8 +11,12 @@ const logger = createLogger({
   ),
   defaultMeta: { service: 'customers-service' },
   transports: [
-    new transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new transports.File({ filename: 'logs/combined.log' }),
+    new transports.Console({
+      format: combine(
+        colorize(),
+        simple()
+      )
+    })
   ],
 });
 

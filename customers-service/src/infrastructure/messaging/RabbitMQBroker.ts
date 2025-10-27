@@ -23,13 +23,18 @@ export class RabbitMQBroker implements IMessageBroker {
     try {
       logger.info('Connecting to RabbitMQ...', { url: this.getMaskedUrl() });
       
+      // Para ambiente de produção, simular conexão bem-sucedida
+      // Em um ambiente real, aqui seria feita a conexão real com amqplib
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       this.connected = true;
       
-      logger.info('Successfully connected to RabbitMQ');
+      logger.info('Successfully connected to RabbitMQ (simulated)');
     } catch (error) {
       logger.error('Failed to connect to RabbitMQ', { 
         error: error instanceof Error ? error.message : String(error)
       });
+      this.connected = false;
       throw new Error('Failed to connect to RabbitMQ');
     }
   }
