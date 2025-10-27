@@ -1,6 +1,6 @@
-import { Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import { logger } from '../config/logger';
-import { RequestWithCorrelationId } from './correlationId';
+import type { RequestWithCorrelationId } from './correlationId';
 
 export const requestLogger = (req: RequestWithCorrelationId, res: Response, next: NextFunction): void => {
   const start = Date.now();
@@ -15,7 +15,7 @@ export const requestLogger = (req: RequestWithCorrelationId, res: Response, next
   const originalEnd = res.end;
   (res as any).end = function(chunk?: any, encoding?: any): Response {
     const duration = Date.now() - start;
-    
+
     logger.info('Request completed', {
       method: req.method,
       url: req.url,

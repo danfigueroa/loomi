@@ -1,4 +1,5 @@
-import { createClient, RedisClientType } from 'redis';
+import type { RedisClientType } from 'redis';
+import { createClient } from 'redis';
 import { logger } from './logger';
 
 class RedisConnection {
@@ -8,7 +9,7 @@ class RedisConnection {
   public static getInstance(): RedisClientType {
     if (!RedisConnection.instance) {
       const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
-      
+
       RedisConnection.instance = createClient({
         url: redisUrl,
         socket: {

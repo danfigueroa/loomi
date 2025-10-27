@@ -21,13 +21,13 @@ export interface ConsumeOptions {
   arguments?: Record<string, any>;
 }
 
-export type MessagePayload = 
-  | string 
-  | number 
-  | boolean 
-  | object 
-  | null 
-  | undefined 
+export type MessagePayload =
+  | string
+  | number
+  | boolean
+  | object
+  | null
+  | undefined
   | string[]
   | Record<string, any>;
 

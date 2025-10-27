@@ -3,7 +3,7 @@ import winston from 'winston';
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
-  winston.format.json()
+  winston.format.json(),
 );
 
 const developmentFormat = winston.format.combine(
@@ -13,7 +13,7 @@ const developmentFormat = winston.format.combine(
     const { timestamp, level, message, ...meta } = info;
     const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
     return `${timestamp} [${level}]: ${message} ${metaStr}`;
-  })
+  }),
 );
 
 export const logger = winston.createLogger({
@@ -34,7 +34,7 @@ if (process.env['NODE_ENV'] === 'production') {
       level: 'error',
       maxsize: 5242880,
       maxFiles: 5,
-    })
+    }),
   );
 
   logger.add(
@@ -42,6 +42,6 @@ if (process.env['NODE_ENV'] === 'production') {
       filename: 'logs/combined.log',
       maxsize: 5242880,
       maxFiles: 5,
-    })
+    }),
   );
 }

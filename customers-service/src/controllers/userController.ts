@@ -1,19 +1,19 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { DatabaseConnection } from '../config/database';
 import { RedisConnection } from '../config/redis';
 import { logger } from '../config/logger';
-import { RequestWithCorrelationId } from '../middlewares/correlationId';
-import { IUserEventPublisher } from '../domain/interfaces/IMessageBroker';
-import { 
-  RegisterRequest, 
-  LoginRequest, 
-  UpdateProfileRequest, 
-  UpdateUserRequest, 
-  UpdateProfilePictureRequest
+import type { RequestWithCorrelationId } from '../middlewares/correlationId';
+import type { IUserEventPublisher } from '../domain/interfaces/IMessageBroker';
+import type {
+  RegisterRequest,
+  LoginRequest,
+  UpdateProfileRequest,
+  UpdateUserRequest,
+  UpdateProfilePictureRequest,
 } from '../types/user.types';
-import { AuthenticatedRequest } from '../types/auth.types';
+import type { AuthenticatedRequest } from '../types/auth.types';
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ import { AuthenticatedRequest } from '../types/auth.types';
  *           maxLength: 500
  *           description: Endereço completo do usuário
  *           example: "Rua das Flores, 123, Centro, São Paulo - SP"
- *     
+ *
  *     UserLoginRequest:
  *       type: object
  *       required:
@@ -69,7 +69,7 @@ import { AuthenticatedRequest } from '../types/auth.types';
  *           type: string
  *           description: Senha do usuário
  *           example: "minhasenha123"
- *     
+ *
  *     UserResponse:
  *       type: object
  *       properties:
@@ -110,7 +110,7 @@ import { AuthenticatedRequest } from '../types/auth.types';
  *           format: date-time
  *           description: Data da última atualização
  *           example: "2024-01-15T10:30:00Z"
- *     
+ *
  *     LoginResponse:
  *       type: object
  *       properties:
@@ -128,7 +128,7 @@ import { AuthenticatedRequest } from '../types/auth.types';
  *           type: string
  *           description: Mensagem de sucesso
  *           example: "Login realizado com sucesso"
- *     
+ *
  *     RegisterResponse:
  *       type: object
  *       properties:
@@ -142,7 +142,7 @@ import { AuthenticatedRequest } from '../types/auth.types';
  *           type: string
  *           description: Mensagem de sucesso
  *           example: "Usuário criado com sucesso"
- *     
+ *
  *     UpdateProfileRequest:
  *       type: object
  *       properties:
@@ -180,21 +180,21 @@ class UserController {
    *     summary: 🚀 Registrar Novo Usuário
    *     description: |
    *       Cria uma nova conta de usuário no sistema com validações completas e segurança avançada.
-   *       
+   *
    *       **🔐 Recursos de Segurança:**
    *       - ✅ Hash seguro da senha com bcrypt
    *       - ✅ Validação de email único
    *       - ✅ Sanitização de dados de entrada
    *       - ✅ Logs de auditoria automáticos
    *       - ✅ Eventos de notificação
-   *       
+   *
    *       **📋 Validações Automáticas:**
    *       - Email em formato válido
    *       - Senha com mínimo de 6 caracteres
    *       - Nome com 2-100 caracteres
    *       - CPF apenas números (opcional)
    *       - Endereço até 500 caracteres (opcional)
-   *       
+   *
    *       **🎯 Casos de Uso:**
    *       - Cadastro de novos clientes
    *       - Onboarding de usuários
@@ -295,20 +295,20 @@ class UserController {
         res.status(400).json({
           success: false,
           error: 'Nome, email e senha são obrigatórios',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
 
       const existingUser = await this.prisma.user.findUnique({
-        where: { email }
+        where: { email },
       });
 
       if (existingUser) {
         res.status(409).json({
           success: false,
           error: 'Usuário já existe com este email',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -321,7 +321,7 @@ class UserController {
           email,
           password: hashedPassword,
           cpf: cpf || null,
-          address: address || null
+          address: address || null,
         },
         select: {
           id: true,
@@ -331,8 +331,8 @@ class UserController {
           isActive: true,
           profilePicture: true,
           createdAt: true,
-          updatedAt: true
-        }
+          updatedAt: true,
+        },
       });
 
       await this.redis.setEx(`user:${user.id}:password`, 86400, hashedPassword);
@@ -351,27 +351,27 @@ class UserController {
       logger.info('User registered successfully', {
         userId: user.id,
         email: user.email,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(201).json({
         success: true,
         data: {
           user,
-          message: 'Usuário registrado com sucesso'
+          message: 'Usuário registrado com sucesso',
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error registering user', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }
@@ -383,19 +383,19 @@ class UserController {
    *     summary: 🔐 Fazer Login
    *     description: |
    *       Autentica um usuário no sistema e retorna um JWT token para acesso às rotas protegidas.
-   *       
+   *
    *       **🔒 Recursos de Segurança:**
    *       - ✅ Verificação segura de senha com bcrypt
    *       - ✅ Geração de JWT token com expiração
    *       - ✅ Cache de sessão no Redis
    *       - ✅ Logs de auditoria de login
    *       - ✅ Proteção contra ataques de força bruta
-   *       
+   *
    *       **⚡ Performance:**
    *       - Cache inteligente de dados do usuário
    *       - Tokens JWT otimizados
    *       - Validação rápida de credenciais
-   *       
+   *
    *       **🎯 Casos de Uso:**
    *       - Login via web app
    *       - Autenticação mobile
@@ -491,7 +491,7 @@ class UserController {
         res.status(400).json({
           success: false,
           error: 'Email e senha são obrigatórios',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -506,15 +506,15 @@ class UserController {
           isActive: true,
           profilePicture: true,
           createdAt: true,
-          updatedAt: true
-        }
+          updatedAt: true,
+        },
       });
 
       if (!user) {
         res.status(401).json({
           success: false,
           error: 'Credenciais inválidas',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -524,7 +524,7 @@ class UserController {
         res.status(401).json({
           success: false,
           error: 'Credenciais inválidas',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -534,7 +534,7 @@ class UserController {
         res.status(401).json({
           success: false,
           error: 'Credenciais inválidas',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -542,13 +542,13 @@ class UserController {
       const token = jwt.sign(
         { userId: user.id, email: user.email },
         process.env['JWT_SECRET'] || 'default-secret',
-        { expiresIn: '24h' }
+        { expiresIn: '24h' },
       );
 
       logger.info('User logged in successfully', {
         userId: user.id,
         email: user.email,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(200).json({
@@ -556,33 +556,33 @@ class UserController {
         data: {
           user,
           token,
-          message: 'Login realizado com sucesso'
+          message: 'Login realizado com sucesso',
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error logging in user', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }
 
   async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user.userId;
 
       if (!userId) {
         res.status(401).json({
           success: false,
           error: 'Token de autenticação inválido',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -604,24 +604,24 @@ class UserController {
               bankCode: true,
               agencyNumber: true,
               accountNumber: true,
-              accountType: true
-            }
-          }
-        }
+              accountType: true,
+            },
+          },
+        },
       });
 
       if (!user) {
         res.status(404).json({
           success: false,
           error: 'Usuário não encontrado',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
 
       logger.info('User profile retrieved', {
         userId: user.id,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(200).json({
@@ -629,35 +629,35 @@ class UserController {
         data: {
           user: {
             ...user,
-            isActive: user.isActive
-          }
+            isActive: user.isActive,
+          },
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error getting user profile', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }
 
   async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user.userId;
       const { name, email, address, profilePicture }: UpdateProfileRequest = req.body;
 
       if (!userId) {
         res.status(401).json({
           success: false,
           error: 'Token de autenticação inválido',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -666,15 +666,15 @@ class UserController {
         const existingUser = await this.prisma.user.findFirst({
           where: {
             email,
-            NOT: { id: userId }
-          }
+            NOT: { id: userId },
+          },
         });
 
         if (existingUser) {
           res.status(409).json({
             success: false,
             error: 'Email já está em uso por outro usuário',
-            correlationId: req.correlationId
+            correlationId: req.correlationId,
           });
           return;
         }
@@ -686,7 +686,7 @@ class UserController {
           ...(name && { name }),
           ...(email && { email }),
           ...(address && { address }),
-          ...(profilePicture && { profilePicture })
+          ...(profilePicture && { profilePicture }),
         },
         select: {
           id: true,
@@ -695,33 +695,33 @@ class UserController {
           address: true,
           profilePicture: true,
           createdAt: true,
-          updatedAt: true
-        }
+          updatedAt: true,
+        },
       });
 
       logger.info('User profile updated', {
         userId: updatedUser.id,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(200).json({
         success: true,
         data: {
           user: updatedUser,
-          message: 'Perfil atualizado com sucesso'
+          message: 'Perfil atualizado com sucesso',
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error updating user profile', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }
@@ -734,7 +734,7 @@ class UserController {
         res.status(400).json({
           success: false,
           error: 'ID do usuário é obrigatório',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -756,24 +756,24 @@ class UserController {
               bankCode: true,
               agencyNumber: true,
               accountNumber: true,
-              accountType: true
-            }
-          }
-        }
+              accountType: true,
+            },
+          },
+        },
       });
 
       if (!user) {
         res.status(404).json({
           success: false,
           error: 'Usuário não encontrado',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
 
       logger.info('User retrieved by ID', {
         userId: user.id,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(200).json({
@@ -781,21 +781,21 @@ class UserController {
         data: {
           user: {
             ...user,
-            isActive: user.isActive
-          }
+            isActive: user.isActive,
+          },
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error getting user by ID', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }
@@ -809,20 +809,20 @@ class UserController {
         res.status(400).json({
           success: false,
           error: 'ID do usuário é obrigatório',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
 
       const existingUser = await this.prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       if (!existingUser) {
         res.status(404).json({
           success: false,
           error: 'Usuário não encontrado',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -831,15 +831,15 @@ class UserController {
         const emailInUse = await this.prisma.user.findFirst({
           where: {
             email,
-            NOT: { id: existingUser.id }
-          }
+            NOT: { id: existingUser.id },
+          },
         });
 
         if (emailInUse) {
           res.status(409).json({
             success: false,
             error: 'Email já está em uso por outro usuário',
-            correlationId: req.correlationId
+            correlationId: req.correlationId,
           });
           return;
         }
@@ -850,13 +850,13 @@ class UserController {
         data: {
           ...(name && { name }),
           ...(email && { email }),
-          ...(address && { address })
-        }
+          ...(address && { address }),
+        },
       });
 
       if (bankingDetails) {
         const existingBankingDetails = await this.prisma.bankingDetails.findUnique({
-          where: { userId }
+          where: { userId },
         });
 
         if (existingBankingDetails) {
@@ -866,8 +866,8 @@ class UserController {
               ...(bankingDetails.bankCode && { bankCode: bankingDetails.bankCode }),
               ...(bankingDetails.agencyNumber && { agencyNumber: bankingDetails.agencyNumber }),
               ...(bankingDetails.accountNumber && { accountNumber: bankingDetails.accountNumber }),
-              ...(bankingDetails.accountType && { accountType: bankingDetails.accountType })
-            }
+              ...(bankingDetails.accountType && { accountType: bankingDetails.accountType }),
+            },
           });
         } else {
           await this.prisma.bankingDetails.create({
@@ -876,8 +876,8 @@ class UserController {
               bankCode: bankingDetails.bankCode || '',
               agencyNumber: bankingDetails.agencyNumber || '',
               accountNumber: bankingDetails.accountNumber || '',
-              accountType: bankingDetails.accountType || 'checking'
-            }
+              accountType: bankingDetails.accountType || 'checking',
+            },
           });
         }
       }
@@ -899,35 +899,35 @@ class UserController {
               bankCode: true,
               agencyNumber: true,
               accountNumber: true,
-              accountType: true
-            }
-          }
-        }
+              accountType: true,
+            },
+          },
+        },
       });
 
       logger.info('User updated by ID', {
         userId: finalUser?.id,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(200).json({
         success: true,
         data: {
           user: finalUser,
-          message: 'Usuário atualizado com sucesso'
+          message: 'Usuário atualizado com sucesso',
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error updating user by ID', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }
@@ -941,7 +941,7 @@ class UserController {
         res.status(400).json({
           success: false,
           error: 'ID do usuário é obrigatório',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -950,20 +950,20 @@ class UserController {
         res.status(400).json({
           success: false,
           error: 'URL da foto de perfil é obrigatória',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
 
       const existingUser = await this.prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       if (!existingUser) {
         res.status(404).json({
           success: false,
           error: 'Usuário não encontrado',
-          correlationId: req.correlationId
+          correlationId: req.correlationId,
         });
         return;
       }
@@ -972,33 +972,33 @@ class UserController {
         where: { id: userId },
         data: { profilePicture },
         include: {
-          bankingDetails: true
-        }
+          bankingDetails: true,
+        },
       });
 
       logger.info('Profile picture updated', {
         userId: updatedUser.id,
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
-      
+
       res.status(200).json({
         success: true,
         data: {
           user: updatedUser,
-          message: 'Foto de perfil atualizada com sucesso'
+          message: 'Foto de perfil atualizada com sucesso',
         },
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     } catch (error) {
       logger.error('Error updating profile picture', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
 
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor',
-        correlationId: req.correlationId
+        correlationId: req.correlationId,
       });
     }
   }

@@ -1,4 +1,4 @@
-import { TransactionStatus, TransactionType } from '../domain/entities/Transaction';
+import type { TransactionStatus, TransactionType } from '../domain/entities/Transaction';
 
 
 export interface CreateTransactionRequest {

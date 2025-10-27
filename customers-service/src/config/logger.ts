@@ -7,7 +7,7 @@ const logger = createLogger({
   format: combine(
     timestamp(),
     errors({ stack: true }),
-    json()
+    json(),
   ),
   defaultMeta: { service: 'customers-service' },
   transports: [
@@ -20,17 +20,13 @@ const logger = createLogger({
   ],
 });
 
-// Adicionar transports de arquivo apenas se o diretório existir
-try {
-  const fs = require('fs');
-  if (!fs.existsSync('logs')) {
-    fs.mkdirSync('logs', { recursive: true });
-  }
-  
-  logger.add(new transports.File({ filename: 'logs/error.log', level: 'error' }));
-  logger.add(new transports.File({ filename: 'logs/combined.log' }));
-} catch (error) {
-  console.error('Erro ao configurar logs de arquivo:', error);
+if (process.env['NODE_ENV'] !== 'production') {
+  logger.add(new transports.Console({
+    format: combine(
+      colorize(),
+      simple(),
+    ),
+  }));
 }
 
 export { logger };

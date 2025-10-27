@@ -1,4 +1,4 @@
-import { RequestWithCorrelationId } from '../middlewares/correlationId';
+import type { RequestWithCorrelationId } from '../middlewares/correlationId';
 
 export interface JwtPayload {
   userId: string;

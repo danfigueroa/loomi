@@ -1,4 +1,4 @@
-# 🏦 Sistema de Microsserviços Bancários Loomi
+# 🏦 Sistema de Microsserviços Loomi
 
 <div align="center">
 

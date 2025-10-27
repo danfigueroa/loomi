@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { DatabaseConnection } from '../config/database';
 import { RedisConnection } from '../config/redis';
 import { logger } from '../config/logger';
-import { IMessageBroker } from '../domain/interfaces/IMessageBroker';
+import type { IMessageBroker } from '../domain/interfaces/IMessageBroker';
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy';
@@ -50,54 +50,12 @@ class HealthController {
 
   async check(_req: Request, res: Response): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       const [databaseStatus, redisStatus, rabbitmqStatus] = await Promise.allSettled([
-        (async () => {
-          try {
-            logger.info('Starting database health check...');
-            const db = DatabaseConnection.getInstance();
-            await db.$connect();
-            const result = await db.$queryRaw`SELECT 1`;
-            logger.info('Database health check successful', { result });
-            return result;
-          } catch (error) {
-            logger.error('Database health check failed', { error: error instanceof Error ? error.message : String(error) });
-            throw error;
-          }
-        })(),
-        (async () => {
-          try {
-            logger.info('Starting Redis health check...');
-            const result = await RedisConnection.ping();
-            logger.info('Redis health check successful', { result });
-            return result;
-          } catch (error) {
-            logger.error('Redis health check failed', { error: error instanceof Error ? error.message : String(error) });
-            throw error;
-          }
-        })(),
-        (async () => {
-          try {
-            logger.info('Starting RabbitMQ health check...');
-            logger.info('Current messageBroker state:', { 
-              messageBroker: this.messageBroker, 
-              type: typeof this.messageBroker,
-              hasMessageBroker: !!this.messageBroker 
-            });
-            if (!this.messageBroker) {
-              logger.error('RabbitMQ not initialized - messageBroker is undefined');
-              throw new Error('RabbitMQ not initialized');
-            }
-            logger.info('MessageBroker instance found, checking connection...');
-            const isConnected = this.messageBroker.isConnected();
-            logger.info('RabbitMQ health check result', { isConnected });
-            return isConnected;
-          } catch (error) {
-            logger.error('RabbitMQ health check failed', { error: error instanceof Error ? error.message : String(error) });
-            throw error;
-          }
-        })()
+        DatabaseConnection.getInstance().$queryRaw`SELECT 1`,
+        RedisConnection.getInstance().ping(),
+        this.messageBroker?.isConnected() ? Promise.resolve(true) : Promise.reject(new Error('RabbitMQ not initialized')),
       ]);
 
       const dbHealthy = databaseStatus.status === 'fulfilled';
@@ -108,7 +66,7 @@ class HealthController {
       logger.info('Health check completed', {
         database: { status: databaseStatus.status, reason: databaseStatus.status === 'rejected' ? databaseStatus.reason : null },
         redis: { status: redisStatus.status, reason: redisStatus.status === 'rejected' ? redisStatus.reason : null },
-        rabbitmq: { status: rabbitmqStatus.status, reason: rabbitmqStatus.status === 'rejected' ? rabbitmqStatus.reason : null }
+        rabbitmq: { status: rabbitmqStatus.status, reason: rabbitmqStatus.status === 'rejected' ? rabbitmqStatus.reason : null },
       });
 
       const healthStatus: HealthStatus = {
@@ -120,22 +78,22 @@ class HealthController {
         checks: {
           database: dbHealthy ? 'healthy' : 'unhealthy',
           redis: redisHealthy ? 'healthy' : 'unhealthy',
-          messageBroker: rabbitmqHealthy ? 'healthy' : 'unhealthy'
-        }
+          messageBroker: rabbitmqHealthy ? 'healthy' : 'unhealthy',
+        },
       };
 
       const responseTime = Date.now() - startTime;
-      
+
       logger.info('Health check completed', {
         status: healthStatus.status,
         responseTime,
-        checks: healthStatus.checks
+        checks: healthStatus.checks,
       });
 
       res.status(isHealthy ? 200 : 503).json(healthStatus);
     } catch (error) {
       logger.error('Health check failed', { error });
-      
+
       const healthStatus: HealthStatus = {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -145,8 +103,8 @@ class HealthController {
         checks: {
           database: 'unhealthy',
           redis: 'unhealthy',
-          messageBroker: 'unhealthy'
-        }
+          messageBroker: 'unhealthy',
+        },
       };
 
       res.status(503).json(healthStatus);
