@@ -52,10 +52,21 @@ class DatabaseConnection {
         logger.error('Database Error', { error: e });
       });
 
-      logger.info('Database connection established');
+      logger.info('Database connection instance created');
     }
 
     return DatabaseConnection.instance;
+  }
+
+  public static async connect(): Promise<void> {
+    const instance = DatabaseConnection.getInstance();
+    try {
+      await instance.$connect();
+      logger.info('Database connection established successfully');
+    } catch (error) {
+      logger.error('Failed to connect to database', { error });
+      throw error;
+    }
   }
 
   public static async disconnect(): Promise<void> {

@@ -25,7 +25,7 @@ export interface RabbitMQConfig {
  * Configuração padrão do RabbitMQ
  */
 export const rabbitmqConfig: RabbitMQConfig = {
-  url: process.env['RABBITMQ_URL'] || 'amqp://rabbitmq:rabbitmq123@localhost:5672',
+  url: process.env['RABBITMQ_URL'] || 'amqp://rabbitmq:rabbitmq123@loomi-rabbitmq:5672',
   queues: {
     userRegistered: 'user.registered',
     bankingDataUpdated: 'user.banking-data-updated',

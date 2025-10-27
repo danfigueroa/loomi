@@ -18,10 +18,34 @@ interface HealthStatus {
 }
 
 class HealthController {
+  private static instance: HealthController;
   private messageBroker?: IMessageBroker;
 
+  constructor() {
+    if (HealthController.instance) {
+      return HealthController.instance;
+    }
+    HealthController.instance = this;
+  }
+
+  static getInstance(): HealthController {
+    if (!HealthController.instance) {
+      HealthController.instance = new HealthController();
+    }
+    return HealthController.instance;
+  }
+
   setMessageBroker(messageBroker: IMessageBroker): void {
+    logger.info('setMessageBroker called with:', { 
+      messageBroker: !!messageBroker, 
+      type: typeof messageBroker,
+      isConnected: messageBroker ? messageBroker.isConnected() : 'N/A'
+    });
     this.messageBroker = messageBroker;
+    logger.info('messageBroker set, current state:', { 
+      hasMessageBroker: !!this.messageBroker,
+      type: typeof this.messageBroker
+    });
   }
 
   async check(_req: Request, res: Response): Promise<void> {
@@ -29,9 +53,51 @@ class HealthController {
     
     try {
       const [databaseStatus, redisStatus, rabbitmqStatus] = await Promise.allSettled([
-        DatabaseConnection.getInstance().$queryRaw`SELECT 1`,
-        RedisConnection.getInstance().ping(),
-        this.messageBroker?.isConnected() ? Promise.resolve(true) : Promise.reject(new Error('RabbitMQ not initialized'))
+        (async () => {
+          try {
+            logger.info('Starting database health check...');
+            const db = DatabaseConnection.getInstance();
+            await db.$connect();
+            const result = await db.$queryRaw`SELECT 1`;
+            logger.info('Database health check successful', { result });
+            return result;
+          } catch (error) {
+            logger.error('Database health check failed', { error: error instanceof Error ? error.message : String(error) });
+            throw error;
+          }
+        })(),
+        (async () => {
+          try {
+            logger.info('Starting Redis health check...');
+            const result = await RedisConnection.ping();
+            logger.info('Redis health check successful', { result });
+            return result;
+          } catch (error) {
+            logger.error('Redis health check failed', { error: error instanceof Error ? error.message : String(error) });
+            throw error;
+          }
+        })(),
+        (async () => {
+          try {
+            logger.info('Starting RabbitMQ health check...');
+            logger.info('Current messageBroker state:', { 
+              messageBroker: this.messageBroker, 
+              type: typeof this.messageBroker,
+              hasMessageBroker: !!this.messageBroker 
+            });
+            if (!this.messageBroker) {
+              logger.error('RabbitMQ not initialized - messageBroker is undefined');
+              throw new Error('RabbitMQ not initialized');
+            }
+            logger.info('MessageBroker instance found, checking connection...');
+            const isConnected = this.messageBroker.isConnected();
+            logger.info('RabbitMQ health check result', { isConnected });
+            return isConnected;
+          } catch (error) {
+            logger.error('RabbitMQ health check failed', { error: error instanceof Error ? error.message : String(error) });
+            throw error;
+          }
+        })()
       ]);
 
       const dbHealthy = databaseStatus.status === 'fulfilled';
@@ -88,4 +154,4 @@ class HealthController {
   }
 }
 
-export const healthController = new HealthController();
+export const healthController = HealthController.getInstance();
