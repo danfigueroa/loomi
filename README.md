@@ -612,12 +612,14 @@ Todos os serviços estão na rede `loomi-network` permitindo comunicação inter
 
 ## 📚 **Documentação Adicional**
 
-| Documento                                     | Descrição                        |
-| --------------------------------------------- | -------------------------------- |
-| [📋 ARCHITECTURE.md](./ARCHITECTURE.md)       | Arquitetura detalhada do sistema |
-| [⚡ PERFORMANCE.md](./PERFORMANCE.md)         | Guia de testes de performance    |
-| [🔧 TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Resolução de problemas           |
-| [📅 PLANEJAMENTO.md](./PLANEJAMENTO.md)       | Roadmap e etapas do projeto      |
+| Documento                                           | Descrição                        |
+| --------------------------------------------------- | -------------------------------- |
+| [📋 ARCHITECTURE.md](./docs/ARCHITECTURE.md)       | Arquitetura detalhada do sistema |
+| [⚡ PERFORMANCE.md](./docs/PERFORMANCE.md)         | Guia de testes de performance    |
+| [🔧 TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | Resolução de problemas           |
+| [📅 PLANEJAMENTO.md](./docs/PLANEJAMENTO.md)       | Roadmap e etapas do projeto      |
+| [📊 Relatórios](./docs/reports/)                   | Relatórios de testes e análises  |
+| [🛠️ Scripts](./scripts/)                           | Scripts de debug e utilitários   |
 
 ## 🤝 **Contribuição**
 

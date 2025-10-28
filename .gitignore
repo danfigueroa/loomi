@@ -11,6 +11,7 @@
 # DEPENDENCIES
 # ===================================
 node_modules/
+node_modules*/
 jspm_packages/
 package-lock.json
 
@@ -135,4 +136,4 @@ docker-compose.override.yml
 # ===================================
 # PRISMA
 # ===================================
-prisma/migrations/
+prisma/migrations/node_modules*
